@@ -1,0 +1,29 @@
+# T.O.M.M.Y OS Global Neural Environment
+# ------------------------------------------------------------------------------
+# Phase 9 Monolithic Integration: This file unites the previous tommyv and tommyg 
+# separate environments into one single Master Virtual Environment.
+
+# 👁️ MODULE 1: Machine Vision & Spatial Architecture (MediaPipe/OpenCV)
+mediapipe==0.10.14
+opencv-python>=4.8.0
+numpy>=1.26.0
+
+# 🗣️ MODULE 2: Auditory processing & Acoustic Neural Modeling (Porcupine/Google)
+pvporcupine>=3.0.1
+pvrecorder>=1.2.1
+SpeechRecognition>=3.10.0
+edge-tts>=6.1.9
+pycaw>=20230407
+comtypes>=1.2.0
+
+# 🖱️ MODULE 3: God-Level OS Manipulation & UI Macro Engineering
+pyautogui>=0.9.54
+uiautomation>=2.0.18
+screen-brightness-control>=0.22.0
+psutil>=5.9.6
+easyocr>=1.7.1
+python-dotenv>=1.0.0
+
+# 🕸️ MODULE 4: Local LLM Brain Nodes & Autonomous Web Scrapers
+requests>=2.31.0
+beautifulsoup4>=4.12.0
