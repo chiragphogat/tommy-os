@@ -2,14 +2,24 @@ import subprocess
 import sys
 import os
 import time
+import json
 
 print("="*60)
-print(" 🧠 BOOTING T.O.M.M.Y. OS MASTER KERNEL V3.0 (Monolithic) 🧠")
+print(" 🧠 BOOTING T.O.M.M.Y. OS MASTER KERNEL V3.2 (Monolithic) 🧠")
 print("="*60)
+
+# Initialize the Inter-Process Communication (IPC) State node
+state_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), ".tommy_state.json")
+try:
+    with open(state_file, "w") as f:
+        json.dump({"vision_mode": "hand"}, f)
+    print("[OS] IPC Subprocess Bridge Initialized (Hand Tracking Default)")
+except Exception as e:
+    print(f"❌ [WARNING] IPC Bridge Failure: {e}")
 
 # The new unified architecture dictates all core intelligence lives in `/src`
 voice_script = os.path.join("src", "voice_engine.py")
-gesture_script = os.path.join("src", "gesture_engine.py")
+gesture_script = os.path.join("src", "vision_engine.py")
 
 # Because both voice and gesture now share the EXACT same Master Environment,
 # we simply use `sys.executable` (the python currently running this script)

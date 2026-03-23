@@ -49,13 +49,17 @@ class VoiceOverlay:
 voice_ui = VoiceOverlay()
 
 # --- 🛰️ INITIALIZATION ---
-load_dotenv()
+load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".env"))
 ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY")
-WAKE_WORD_PATH = os.getenv("WAKE_WORD_PATH")
+WAKE_WORD_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "assets", "hey_tommy.ppn")
 
-# --- 🧠 LONG-TERM RAG MEMORY ---
+# --- 🧠 LONG-TERM RAG & STATE MEMORY ---
 import json
 MEMORY_FILE = os.path.join(os.path.expanduser("~"), ".tommy_memory.json")
+STATE_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".tommy_state.json")
+
+CURRENT_VOICE_MODE = "normal"
+state_lock = threading.Lock()
 
 def store_memory(key, value):
     try:
@@ -241,6 +245,64 @@ def execute_logic_chain(full_command):
         cmd = task.strip()
         if not cmd: continue
         print(f"   ↳ [PROCESSING]: {cmd}")
+        
+        global CURRENT_VOICE_MODE
+        
+        # --- PHASE 10: CONTEXTUAL VOICE MODES & VISION TOGGLES ---
+        if cmd in ["activate study mode", "study mode", "switch to study mode"]:
+            with state_lock: CURRENT_VOICE_MODE = "study"
+            speak("Study mode active. I will bypass wake-words and listen for document commands natively.")
+            results.append("Study Mode On")
+            continue
+        elif cmd in ["activate movie mode", "movie mode", "switch to movie mode"]:
+            with state_lock: CURRENT_VOICE_MODE = "movie"
+            speak("Movie mode active. I will bypass wake-words and listen for media controls natively.")
+            results.append("Movie Mode On")
+            continue
+        elif any(w in cmd for w in ["normal mode", "deactivate study mode", "deactivate movie mode", "exit mode", "quit mode"]):
+            with state_lock: CURRENT_VOICE_MODE = "normal"
+            speak("Normal mode active. I require the wake word 'Hey Tommy' to listen.")
+            results.append("Normal Mode On")
+            continue
+            
+        elif cmd in ["switch to eye control", "eye control", "use eye tracking", "enable eye control"]:
+            try:
+                with state_lock:
+                    if os.path.exists(STATE_FILE):
+                        with open(STATE_FILE, "r") as f: data = json.load(f)
+                    else: data = {}
+                    data["vision_mode"] = "eye"
+                    with open(STATE_FILE, "w") as f: json.dump(data, f)
+                speak("Optical eye tracking enabled.")
+                results.append("Eye Control On")
+            except: pass
+            continue
+        elif cmd in ["switch to hand control", "hand control", "use hand tracking", "enable hand control"]:
+            try:
+                with state_lock:
+                    if os.path.exists(STATE_FILE):
+                        with open(STATE_FILE, "r") as f: data = json.load(f)
+                    else: data = {}
+                    data["vision_mode"] = "hand"
+                    with open(STATE_FILE, "w") as f: json.dump(data, f)
+                speak("Spatial hand tracking enabled.")
+                results.append("Hand Control On")
+            except: pass
+            continue
+
+        # --- MEDIA CONTROLS (Movie Mode Enhancements) ---
+        if any(w in cmd for w in ["play video", "pause video", "play song", "pause song"]) or cmd in ["play", "pause"]:
+            pyautogui.press('playpause')
+            results.append("Toggled Media")
+            continue
+        elif cmd in ["next", "next track", "next video", "skip"]:
+            pyautogui.press('nexttrack')
+            results.append("Next Track")
+            continue
+        elif cmd in ["last", "last track", "previous", "previous track", "back"]:
+            pyautogui.press('prevtrack')
+            results.append("Previous Track")
+            continue
 
         # --- NON-BLOCKING AI GENERATION (Phase 3 Fix) ---
         if cmd.startswith("write"):
@@ -673,65 +735,105 @@ def run_tommy(queue=None):
 
     try:
         while True:
-            voice_ui.set_color("yellow")
-            print("\r[WAITING] Listening for 'Hey Tommy'...", end="", flush=True)
-            if porcupine.process(recorder.read()) >= 0:
-                print("\n\n[★ WAKE WORD DETECTED]")
+            with state_lock:
+                current_mode = CURRENT_VOICE_MODE
+                
+            if current_mode == "normal":
+                voice_ui.set_color("yellow")
+                print("\r[WAITING] Listening for 'Hey Tommy'...", end="", flush=True)
+                if porcupine.process(recorder.read()) >= 0:
+                    print("\n\n[★ WAKE WORD DETECTED]")
 
-                # Deterministically mute system audio so calibration
-                # doesn't hear Tommy's own speakers.
-                set_system_mute(True)
-
-                with sr.Microphone() as source:
-                    # 1. Re-calibrate for current ambient conditions
-                    r.adjust_for_ambient_noise(source, duration=0.75)
-                    r.energy_threshold = max(ENERGY_FLOOR, min(ENERGY_CEILING, r.energy_threshold))
-                    print(f"   [re-calibrated] energy = {r.energy_threshold:.0f}")
-
-                    # 2. Unmute so the user hears the "Yes?" acknowledgment
-                    set_system_mute(False)
-                    speak("Yes?")
-
-                    # 3. Brief mute while listening to avoid picking up TTS tail
-                    time.sleep(0.25)          # let "Yes?" finish playing
+                    # Deterministically mute system audio so calibration
+                    # doesn't hear Tommy's own speakers.
                     set_system_mute(True)
 
-                    print("[LISTENING] Speak now...")
-                    voice_ui.set_color("green")
-                    
-                    while True:
-                        try:
-                            # timeout=None guarantees Tommy waits INFINITELY for the user to speak
-                            audio = r.listen(source, timeout=None, phrase_time_limit=30)
-                            
-                            # Unmute immediately after capturing vocals
-                            set_system_mute(False)
-                            command = r.recognize_google(audio)
-                            
-                            # If the user accidentally says "Hey Tommy" again while the box is green, 
-                            # we ignore the duplicate and keep the mic explicitly open!
-                            if command.lower() in ["hey tommy", "tommy", "hey johnny", "hey dummy"]:
-                                set_system_mute(True)
-                                continue
-                                
-                            print(f"   ↳ [HEARD]: \"{command}\"")
-                            voice_ui.set_color("red")
-                            
-                            # ── Background Execution ────────────────
-                            threading.Thread(target=execute_logic_chain, args=(command,), daemon=True).start()
-                            break # Exits the infinite listening loop and returns to Yellow Wake-Word hunting
+                    with sr.Microphone() as source:
+                        # 1. Re-calibrate for current ambient conditions
+                        r.adjust_for_ambient_noise(source, duration=0.75)
+                        r.energy_threshold = max(ENERGY_FLOOR, min(ENERGY_CEILING, r.energy_threshold))
+                        print(f"   [re-calibrated] energy = {r.energy_threshold:.0f}")
 
-                        except sr.WaitTimeoutError:
-                            continue # Ignore all timeouts natively
-                        except sr.UnknownValueError:
-                            # User coughed or mumbled nonsense. Keep the box GREEN and keep waiting!
-                            set_system_mute(True)
-                            continue 
-                        except Exception as e:
-                            set_system_mute(False)
-                            print(f"❌ [ERROR]: Unhandled Exception {e}.\n")
+                        # 2. Unmute so the user hears the "Yes?" acknowledgment
+                        set_system_mute(False)
+                        speak("Yes?")
+
+                        # 3. Brief mute while listening to avoid picking up TTS tail
+                        time.sleep(0.25)          # let "Yes?" finish playing
+                        set_system_mute(True)
+
+                        print("[LISTENING] Speak now...")
+                        voice_ui.set_color("green")
+                        
+                        while True:
+                            try:
+                                # timeout=None guarantees Tommy waits INFINITELY for the user to speak
+                                audio = r.listen(source, timeout=None, phrase_time_limit=30)
+                                
+                                # Unmute immediately after capturing vocals
+                                set_system_mute(False)
+                                command = r.recognize_google(audio)
+                                
+                                # If the user accidentally says "Hey Tommy" again while the box is green, 
+                                # we ignore the duplicate and keep the mic explicitly open!
+                                if command.lower() in ["hey tommy", "tommy", "hey johnny", "hey dummy"]:
+                                    set_system_mute(True)
+                                    continue
+                                    
+                                print(f"   ↳ [HEARD (Normal)]: \"{command}\"")
+                                voice_ui.set_color("red")
+                                
+                                # ── Background Execution ────────────────
+                                threading.Thread(target=execute_logic_chain, args=(command,), daemon=True).start()
+                                break # Exits the infinite listening loop and returns to Yellow Wake-Word hunting
+
+                            except sr.WaitTimeoutError:
+                                continue # Ignore all timeouts natively
+                            except sr.UnknownValueError:
+                                # User coughed or mumbled nonsense. Keep the box GREEN and keep waiting!
+                                set_system_mute(True)
+                                continue 
+                            except Exception as e:
+                                set_system_mute(False)
+                                print(f"❌ [ERROR]: Unhandled Exception {e}.\n")
+                                voice_ui.set_color("red")
+                                break
+                                
+            # Phase 10: Free-Voice Native Modes
+            elif current_mode in ["study", "movie"]:
+                voice_ui.set_color("green")
+                # Burn a porcupine frame aggressively to prevent memory leaks while Wake Word bypassed
+                recorder.read()
+                
+                with sr.Microphone() as source:
+                    print(f"\r[FREE VOICE] Active Mode: [{current_mode.upper()}]  <-- Ambient Array Listening...", end="", flush=True)
+                    try:
+                        audio = r.listen(source, timeout=None, phrase_time_limit=15)
+                        command = r.recognize_google(audio).lower()
+                        print(f"\n   ↳ [AMBIENT CAUGHT]: \"{command}\"")
+                        
+                        # Process contextual commands without Wake Word
+                        valid_command = None
+                        if "normal mode" in command or "exit mode" in command:
+                            valid_command = "switch to normal mode"
+                        elif current_mode == "study":
+                            if any(w in command for w in ["scroll down", "scroll up", "bright", "dark", "volume"]):
+                                valid_command = command
+                        elif current_mode == "movie":
+                            if any(w in command for w in ["play", "pause", "next", "last", "skip", "back"]):
+                                valid_command = command
+                                
+                        if valid_command:
                             voice_ui.set_color("red")
-                            break
+                            threading.Thread(target=execute_logic_chain, args=(valid_command,), daemon=True).start()
+                            time.sleep(1.0) # Graceful thread dispatch wait
+                            
+                    except sr.WaitTimeoutError:
+                        pass
+                    except sr.UnknownValueError:
+                        pass
+                    except Exception as e:
+                        print(f"❌ Ambient Error: {e}")
 
     except KeyboardInterrupt:
         pass
