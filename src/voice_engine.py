@@ -295,17 +295,61 @@ def execute_logic_chain(full_command):
             except: pass
             continue
             
-        # --- PHASE 11: OMNI-SENSORY SUPERPOWER MODE (BLIND ACCESSIBILITY) ---
-        elif cmd in ["activate superpower mode", "superpower mode", "what's in front of me", "what is in front of me", "describe my room"]:
+        # --- PHASE 11/12: OMNI-SENSORY SUPERPOWER MODE (BLIND ACCESSIBILITY) ---
+        elif cmd in ["activate superpower mode", "superpower mode", "switch to superpower mode"]:
+            with state_lock: CURRENT_VOICE_MODE = "superpower"
+            speak("Superpower mode active. I am now your eyes. I am listening continuously.")
+            results.append("Superpower Mode On")
+            continue
+            
+        elif cmd in ["what's in front of me", "what is in front of me", "describe my room"]:
             image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "assets", ".latest_realworld.jpg")
             if os.path.exists(image_path):
-                results.append("Superpower Scan")
-                speak("Superpower mode active. Scanning physical environment.")
+                results.append("Physical Scan")
+                speak("Scanning physical environment.")
                 desc = ask_local_vision("Describe exactly what is physically happening in this camera photo. Be extremely descriptive for a blind person. Read any text you see if relevant.", image_path)
-                speak(f"My vision sensors report: {desc}")
+                speak(f"My physical sensors report: {desc}")
             else:
-                speak("Superpower mode offline. The vision engine camera is not active.")
-                results.append("Superpower Failed")
+                speak("The vision engine camera is not active.")
+                results.append("Scan Failed")
+            continue
+            
+        elif cmd in ["read the screen", "read screen", "read text", "read the text on my screen"]:
+            results.append("Reading Screen")
+            speak("Scanning screen for text.")
+            import tempfile, uuid
+            shot_path = os.path.join(tempfile.gettempdir(), f"ocr_{uuid.uuid4().hex}.png")
+            with ui_lock: pyautogui.screenshot(shot_path)
+            
+            def ocr_task(path):
+                try:
+                    import easyocr
+                    reader = easyocr.Reader(['en'], gpu=False) # GPU False for stability
+                    text_blocks = reader.readtext(path, detail=0)
+                    if text_blocks:
+                        full_text = " ".join(text_blocks)
+                        speak(f"The screen says: {full_text}")
+                    else:
+                        speak("I do not see any readable text on the screen.")
+                except Exception as e:
+                    speak("OCR Engine offline.")
+                finally:
+                    try: os.remove(path)
+                    except: pass
+            threading.Thread(target=ocr_task, args=(shot_path,), daemon=True).start()
+            continue
+            
+        elif cmd in ["what window am i in", "where am i", "what application is this"]:
+            results.append("Window Context")
+            try:
+                import uiautomation as auto
+                fg = auto.GetForegroundControl()
+                if fg and getattr(fg, 'Name', None):
+                    speak(f"You are currently looking at {fg.Name}")
+                else:
+                    speak("I am having trouble determining the active window.")
+            except:
+                speak("Window automation offline.")
             continue
 
         # --- MEDIA CONTROLS (Movie Mode Enhancements) ---
@@ -687,6 +731,11 @@ def execute_logic_chain(full_command):
                 pass
 
     final_response = " | ".join(results)
+    
+    # PHASE 12: BLIND CONFIRMATION OVERRIDE
+    if CURRENT_VOICE_MODE == "superpower" and not final_response and len(results) > 0:
+        final_response = f"I have executed: {results[-1]}"
+
     if final_response:
         clean_speech = final_response.replace("|", " and ")
         speak(clean_speech)
