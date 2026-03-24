@@ -97,7 +97,12 @@ def speak(text):
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             subprocess.run(cmd, shell=True, startupinfo=startupinfo, creationflags=subprocess.CREATE_NO_WINDOW)
             
-            # Play MP3 invisibly using Windows MCI
+            # PHASE 11: CRITICAL AUDIO BYPASS
+            # Forcibly UNMUTE the master volume matrix immediately before Microsoft TTS playback natively.
+            # This mathematically prevents the rigid wake-word algorithm from suffocating Tommy's voice.
+            set_system_mute(False)
+            
+            # Play MP3 invisibly using Windows MCI synchronously ('wait')
             ctypes.windll.winmm.mciSendStringW(rf"close {alias}", None, 0, None)
             ctypes.windll.winmm.mciSendStringW(rf'open "{filepath}" type mpegvideo alias {alias}', None, 0, None)
             ctypes.windll.winmm.mciSendStringW(rf"play {alias} wait", None, 0, None)
@@ -288,6 +293,19 @@ def execute_logic_chain(full_command):
                 speak("Spatial hand tracking enabled.")
                 results.append("Hand Control On")
             except: pass
+            continue
+            
+        # --- PHASE 11: OMNI-SENSORY SUPERPOWER MODE (BLIND ACCESSIBILITY) ---
+        elif cmd in ["activate superpower mode", "superpower mode", "what's in front of me", "what is in front of me", "describe my room"]:
+            image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "assets", ".latest_realworld.jpg")
+            if os.path.exists(image_path):
+                results.append("Superpower Scan")
+                speak("Superpower mode active. Scanning physical environment.")
+                desc = ask_local_vision("Describe exactly what is physically happening in this camera photo. Be extremely descriptive for a blind person. Read any text you see if relevant.", image_path)
+                speak(f"My vision sensors report: {desc}")
+            else:
+                speak("Superpower mode offline. The vision engine camera is not active.")
+                results.append("Superpower Failed")
             continue
 
         # --- MEDIA CONTROLS (Movie Mode Enhancements) ---

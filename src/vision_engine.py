@@ -84,6 +84,9 @@ def run_vision_engine():
     cam_w, cam_h = 1280, 720
     cap.set(3, cam_w)
     cap.set(4, cam_h)
+    
+    # --- PHYSICAL WORLD SNAPSHOT TIMER ---
+    last_snapshot_time = 0.0
 
     # --- HAND STATE ---
     plocX, plocY = 0, 0
@@ -126,6 +129,15 @@ def run_vision_engine():
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
         current_time = time.time()
+        
+        # --- PHASE 11: Omni-Sensory Superpower Cache ---
+        # Quietly drop a single high-quality frame of the Physical World to disk every 1.5s
+        # This allows the Voice LLM to 'look' through the blocked Vision Camera.
+        if current_time - last_snapshot_time > 1.5:
+            snapshot_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "assets", ".latest_realworld.jpg")
+            try: cv2.imwrite(snapshot_path, img)
+            except: pass
+            last_snapshot_time = current_time
 
         # =========================================================
         # 1️⃣ HAND TRACKING SYSTEM
