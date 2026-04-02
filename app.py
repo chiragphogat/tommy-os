@@ -64,14 +64,19 @@ with tab1:
     st.code("git clone https://github.com/chiragphogat/tommy-os.git\ncd tommy-os\nsetup.bat", language="bash")
     
     st.markdown("---")
-    st.markdown("## 📖 The Core Problem")
+    st.markdown("## 📖 Project Description")
     st.markdown("""
-    Computers still keep us chained to desks using 1980s peripheral mice. While massive companies push 'Voice Assistants', they are almost exclusively cloud chatbots that have zero physical control over your desktop environment. 
+    In recent years, human–computer interaction has evolved rapidly; however, software systems still rely heavily on legacy physical input devices like standard keyboards and mice. These interaction methods are fundamentally inefficient in dynamic, hands-free, or assistive environments.
     
-    We engineered T.O.M.M.Y. to solve this directly. Instead of mashing heavy vision models and offline Large Language Models (LLMs) into one sluggish Python script—which instantly hits the GIL (Global Interpreter Lock) and freezes your computer—we tore down the basic architecture. We divided the system into entirely isolated subprocesses that communicate via lightning-fast JSON injection. 
-
-    Now, you can execute basic commands instantaneously off pure mathematical geometry, and run massive localized Language Models completely offline in the background without severe context-switching lag.
+    The **T.O.M.M.Y (Tactile, Optical, and Multimodal Machine Yield)** engine directly addresses this limitation by introducing a native OS interaction framework. It enables Windows to understand raw human intent dynamically through Voice Commands, Hand Geometric manipulations, and Eye-Blink execution.
+    
+    The system captures input natively using localized webcams and microphones, bypassing cloud surveillance. Each modality is processed entirely independently across isolated CPU threads, preventing memory collision. A multimodal fusion engine (via JSON IPC) dynamically synchronizes the audio and visual matrices, guaranteeing that heavy auditory Processing does not bottleneck or crash the 60FPS visual pointer logic.
+    
+    T.O.M.M.Y is engineered with a modular, 100% offline architecture, making it highly secure for environments demanding data privacy.
     """)
+
+    st.markdown("### 🌍 Project Impact")
+    st.markdown("This project successfully demonstrates the absolute physical eradication of traditional IO peripherals. It drastically improves graphical accessibility for differently-abled operators, and enforces native execution logic without forcing sensitive audio data onto external Amazon/Google network servers.")
 
     st.markdown("---")
     st.markdown("## 💻 Engineering Team Roster")
@@ -204,5 +209,38 @@ with tab3:
         Once locked securely into gaze mode, the **Eye Aspect Ratio (EAR)** system dynamically filters out random biological blinks, successfully executing a system mouse click only if the user throws a hard, deliberate optic wink constraint.
         """)
         st.latex(r"EAR_{wink} = \frac{||P_2 - P_6|| + ||P_3 - P_5||}{2||P_1 - P_4||}")
+
+    st.markdown("### Development Documentation & Modules")
+
+    with st.expander("📝 System Module Pipeline (01 - 05)", expanded=False):
+        st.markdown("""
+        * **Module 01: Requirement Analysis:** Investigated the GIL limitation of Python preventing synchronous audio and CV2 execution.
+        * **Module 02: Process Architecture:** Stripped the monolithic code into independent multi-core subprocesses bound heavily by `.tommy_state.json` payload states. 
+        * **Module 03: The Voice Input Driver:** Engaged `pvporcupine` for atomic hotword evaluation, routing valid arrays instantly into a localized Llama-3 NLP decoder.
+        * **Module 04: Spatial Vision Control:** Abandoned CNN-based classification for raw Geometric matrices. Developed the 21-point X/Y coordinate bounding grid using MediaPipe over CPU XNNPACK.
+        * **Module 05: The Multimodal Fusion Core:** Finalized decision-level parsing. If the camera detects a pinch while the audio hears "Brightness", the OS routes the mathematical intersection entirely locally.
+        """)
+
+    with st.expander("⚙️ Core Algorithms, Libraries, and Tools Used", expanded=False):
+        st.markdown("""
+        * **Vision Processing:** `OpenCV` and `MediaPipe` (Bypassed Keras/Tensorflow CNNs for instantaneous strict geometric coordinate math).
+        * **Auditory Analysis:** `SpeechRecognition`, `PvRecorder`, and `PvPorcupine` (Replaced legacy MFCC/Librosa limits with dynamic driver-yielding atomic loops).
+        * **Offline Language Reasoning:** Meta's `Llama-3` executed entirely locally via `Ollama`.
+        * **Hardware Actuation:** `uiautomation` and `screen-brightness-control` (Operating exclusively on asynchronous background daemons).
+        * **System Concurrency:** `subprocess`, native OS Threading, and JSON State Bridging.
+        """)
+
+    with st.expander("📈 12-Week Execution Plan", expanded=False):
+        st.markdown("""
+        * **Week 1-2:** Analytical gap-analysis of existing APIs and native Process Architecture planning.
+        * **Week 3-4:** Subprocess memory isolation and state-bridge design.
+        * **Week 5-6:** Acoustic engine deployment and WakeWord driver yield-patching.
+        * **Week 7-8:** Vision mesh construction and native bounding-box scale mathematics.
+        * **Week 9-10:** Multimodal intersection and OS Driver Actuator binding.
+        * **Week 11-12:** Latency optimization and final documentation packaging.
+        """)
+
+    with st.expander("🚀 Future Enhancements", expanded=False):
+        st.markdown("Subsequent iterations of the T.O.M.M.Y. kernel will prioritize **Retrieval-Augmented Generation (RAG) UI Parsing**. By granting the offline LLM access to real-time `cv2` screenshot buffers, the language model will dynamically read legacy Graphical User Interfaces and execute complex application workflows identical to human visual comprehension.")
 
     st.markdown("<br><hr><center><p style='color:#8b949e;'>Engineered for academic evaluation. Open-Sourced purely for Native Windows Frameworks.</p></center>", unsafe_allow_html=True)
