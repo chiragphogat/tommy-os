@@ -59,7 +59,7 @@ with tab1:
     st.markdown("## 💻 Engineering Team Roster")
     st.markdown("T.O.M.M.Y was researched, architected, and engineered at Lovely Professional University.")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         with st.container(border=True):
             st.image("assets/chirag.jpeg", use_column_width=True)
@@ -67,11 +67,15 @@ with tab1:
     with col2:
         with st.container(border=True):
             st.image("assets/chava.jpeg", use_column_width=True)
-            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Chava Harshavardhan</h3><p style='color:#8b949e; text-align:center;'>Gaze Estimation & Eye Control Integration</p>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Chava Harshavardhan</h3><p style='color:#8b949e; text-align:center;'>Gaze Estimation</p>", unsafe_allow_html=True)
     with col3:
         with st.container(border=True):
             st.image("assets/lalmalsawm.jpeg", use_column_width=True)
-            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Lalmalsawm Guite</h3><p style='color:#8b949e; text-align:center;'>Lead Researcher & Concept Iteration</p>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Lalmalsawm Guite</h3><p style='color:#8b949e; text-align:center;'>Lead Researcher</p>", unsafe_allow_html=True)
+    with col4:
+        with st.container(border=True):
+            st.image("assets/kaushal.jpeg", use_column_width=True)
+            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Kaushal Pathak</h3><p style='color:#8b949e; text-align:center;'>Project Guide & Mentor</p>", unsafe_allow_html=True)
 
 
 # =========================================================================
