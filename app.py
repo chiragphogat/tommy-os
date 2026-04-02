@@ -129,6 +129,39 @@ with tab2:
     This comparative breakdown definitively confirms that T.O.M.M.Y. bridges the isolation between cloud-level conceptual reasoning and native low-level hardware actuation. The 12-Module Substructure provides a vastly more resilient, adaptive, and future-forward interface than any legacy HCI format evaluated today.
     """)
 
+    st.markdown("---")
+    st.markdown("### Development Documentation & Modules")
+    with st.expander("📝 System Module Pipeline (01 - 05)", expanded=False):
+        st.markdown("""
+        * **Module 01: Requirement Analysis:** Investigated the GIL limitation of Python preventing synchronous audio and CV2 execution.
+        * **Module 02: Process Architecture:** Stripped the monolithic code into independent multi-core subprocesses bound heavily by `.tommy_state.json` payload states. 
+        * **Module 03: The Voice Input Driver:** Engaged `pvporcupine` for atomic hotword evaluation, routing valid arrays instantly into a localized Llama-3 NLP decoder.
+        * **Module 04: Spatial Vision Control:** Abandoned CNN-based classification for raw Geometric matrices. Developed the 21-point X/Y coordinate bounding grid using MediaPipe over CPU XNNPACK.
+        * **Module 05: The Multimodal Fusion Core:** Finalized decision-level parsing. If the camera detects a pinch while the audio hears "Brightness", the OS routes the mathematical intersection entirely locally.
+        """)
+
+    with st.expander("⚙️ Core Algorithms, Libraries, and Tools Used", expanded=False):
+        st.markdown("""
+        * **Vision Processing:** `OpenCV` and `MediaPipe` (Bypassed Keras/Tensorflow CNNs for instantaneous strict geometric coordinate math).
+        * **Auditory Analysis:** `SpeechRecognition`, `PvRecorder`, and `PvPorcupine` (Replaced legacy MFCC/Librosa limits with dynamic driver-yielding atomic loops).
+        * **Offline Language Reasoning:** Meta's `Llama-3` executed entirely locally via `Ollama`.
+        * **Hardware Actuation:** `uiautomation` and `screen-brightness-control` (Operating exclusively on asynchronous background daemons).
+        * **System Concurrency:** `subprocess`, native OS Threading, and JSON State Bridging.
+        """)
+
+    with st.expander("📈 12-Week Execution Plan", expanded=False):
+        st.markdown("""
+        * **Week 1-2:** Analytical gap-analysis of existing APIs and native Process Architecture planning.
+        * **Week 3-4:** Subprocess memory isolation and state-bridge design.
+        * **Week 5-6:** Acoustic engine deployment and WakeWord driver yield-patching.
+        * **Week 7-8:** Vision mesh construction and native bounding-box scale mathematics.
+        * **Week 9-10:** Multimodal intersection and OS Driver Actuator binding.
+        * **Week 11-12:** Latency optimization and final documentation packaging.
+        """)
+        
+    with st.expander("🚀 Future Enhancements", expanded=False):
+        st.markdown("Subsequent iterations of the T.O.M.M.Y. kernel will prioritize **Retrieval-Augmented Generation (RAG) UI Parsing**. By granting the offline LLM access to real-time `cv2` screenshot buffers, the language model will dynamically read legacy Graphical User Interfaces and execute complex application workflows identical to human visual comprehension.")
+
 
 # =========================================================================
 # TAB 3: FULL PAPER
@@ -409,64 +442,31 @@ ALGORITHM 1: How the IPC Cores Actually Talk to Each Other
     st.markdown("### Acknowledgments")
     st.markdown("We've got to give a massive shoutout to the crazy open-source engineering behind Google's MediaPipe and the local inference builders over at Ollama. Without their core math, this wrapper would not exist. That being said, all the software plumbing, IPC bridging, self-healing Python loops, and chaotic geometry hacks documented in this paper were built entirely by us.")
     
-    with st.expander("References"):
-        st.markdown("""
-        [1] B. Shneiderman, "Direct Manipulation: A Step Beyond Programming Languages," IEEE Computer, vol. 16, no. 8, pp. 57-69, 1983.  
-        [2] P. Fitts, "The Information Capacity of the Human Motor System in Controlling the Amplitude of Movement," Journal of Experimental Psychology, vol. 47, no. 6, pp. 381-391, 1954.  
-        [3] Y. Wu and T. Huang, "Vision-Based Gesture Recognition: A Review," Gesture-Based Communication in HCI, Springer, Berlin, 1999, pp. 103-115.  
-        [4] S. Mitra and T. Acharya, "Gesture Recognition: A Survey," IEEE Transactions on Systems, Man, and Cybernetics, vol. 37, no. 3, pp. 311-324, 2007.  
-        [5] D. Beazley, "Understanding the Python GIL," in PyCon Proceedings, 2010.  
-        [6] A. Silberschatz, P. B. Galvin, and G. Gagne, Operating System Concepts, 10th ed. Wiley, 2018.  
-        [7] R. J. K. Jacob, "The use of eye movements in human-computer interaction techniques: what you look at is what you get," ACM Transactions on Information Systems, 1991.  
-        [8] P. Viola and M. Jones, "Rapid Object Detection using a Boosted Cascade of Simple Features," in CVPR, 2001, pp. 511-518.  
-        [9] M. Abadi et al., "TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems," OSDI, 2016.  
-        [10] J. Shotton et al., "Real-Time Human Pose Recognition in Parts from Single Depth Images," in CVPR, 2011.  
-        [11] T. Soukupova and J. Cech, "Real-Time Eye Blink Detection using Facial Landmarks," 21st Computer Vision Winter Workshop, 2016.  
-        [12] S. Oviatt, "Multimodal Interfaces," Handbook of Human-Computer Interaction, Erlbaum, 1999.  
-        [13] A. Graves, A. Mohamed, and G. Hinton, "Speech Recognition with Deep Recurrent Neural Networks," in ICASSP, 2013, pp. 6645-6649.  
-        [14] R. A. Bolt, "Put-That-There: Voice and Gesture at the Graphics Interface," SIGGRAPH, vol. 14, no. 3, pp. 262-270, 1980.  
-        [15] S. Poria, E. Cambria, D. Hazarika, and P. Majumder, "A Review of Affective Computing: From Unimodal Analysis to Multimodal Fusion," Information Fusion, vol. 37, pp. 98-125, 2017.  
-        [16] C. Lugaresi et al., "MediaPipe: A Framework for Building Perception Pipelines," arXiv preprint arXiv:1906.08172, 2019.  
-        [17] G. Rossum and F. L. Drake, The Python Language Reference, Python Software Foundation, 2010.  
-        [18] Z. Ren, J. Yuan, J. Meng, and Z. Zhang, "Robust Part-Based Hand Gesture Recognition Using Kinect Sensor," IEEE Transactions on Multimedia, 2013.  
-        [19] Apple Human Interface Guidelines, "Designing for Touch and Gesture," Apple Inc., 2022.  
-        [20] Microsoft Research, "Windows Automation API and HCI Control Sets," Microsoft Corp., 2021.  
-        [21] Google AI, "FaceMesh: High-Fidelity Performance for Real-Time AR," Google Research Journal, 2020.  
-        [22] J. S. Hunter, "The Exponentially Weighted Moving Average," Journal of Quality Technology, vol. 18, no. 4, pp. 203–210, 1986.  
-        [23] OpenAI, "Large Language Models and the Evolution of Semantic Reasoners," Technical Report, 2023.  
-        """)
-
-    st.markdown("---")
-    st.markdown("### Development Documentation & Modules")
-    with st.expander("📝 System Module Pipeline (01 - 05)", expanded=False):
-        st.markdown("""
-        * **Module 01: Requirement Analysis:** Investigated the GIL limitation of Python preventing synchronous audio and CV2 execution.
-        * **Module 02: Process Architecture:** Stripped the monolithic code into independent multi-core subprocesses bound heavily by `.tommy_state.json` payload states. 
-        * **Module 03: The Voice Input Driver:** Engaged `pvporcupine` for atomic hotword evaluation, routing valid arrays instantly into a localized Llama-3 NLP decoder.
-        * **Module 04: Spatial Vision Control:** Abandoned CNN-based classification for raw Geometric matrices. Developed the 21-point X/Y coordinate bounding grid using MediaPipe over CPU XNNPACK.
-        * **Module 05: The Multimodal Fusion Core:** Finalized decision-level parsing. If the camera detects a pinch while the audio hears "Brightness", the OS routes the mathematical intersection entirely locally.
-        """)
-
-    with st.expander("⚙️ Core Algorithms, Libraries, and Tools Used", expanded=False):
-        st.markdown("""
-        * **Vision Processing:** `OpenCV` and `MediaPipe` (Bypassed Keras/Tensorflow CNNs for instantaneous strict geometric coordinate math).
-        * **Auditory Analysis:** `SpeechRecognition`, `PvRecorder`, and `PvPorcupine` (Replaced legacy MFCC/Librosa limits with dynamic driver-yielding atomic loops).
-        * **Offline Language Reasoning:** Meta's `Llama-3` executed entirely locally via `Ollama`.
-        * **Hardware Actuation:** `uiautomation` and `screen-brightness-control` (Operating exclusively on asynchronous background daemons).
-        * **System Concurrency:** `subprocess`, native OS Threading, and JSON State Bridging.
-        """)
-
-    with st.expander("📈 12-Week Execution Plan", expanded=False):
-        st.markdown("""
-        * **Week 1-2:** Analytical gap-analysis of existing APIs and native Process Architecture planning.
-        * **Week 3-4:** Subprocess memory isolation and state-bridge design.
-        * **Week 5-6:** Acoustic engine deployment and WakeWord driver yield-patching.
-        * **Week 7-8:** Vision mesh construction and native bounding-box scale mathematics.
-        * **Week 9-10:** Multimodal intersection and OS Driver Actuator binding.
-        * **Week 11-12:** Latency optimization and final documentation packaging.
-        """)
-        
-    with st.expander("🚀 Future Enhancements", expanded=False):
-        st.markdown("Subsequent iterations of the T.O.M.M.Y. kernel will prioritize **Retrieval-Augmented Generation (RAG) UI Parsing**. By granting the offline LLM access to real-time `cv2` screenshot buffers, the language model will dynamically read legacy Graphical User Interfaces and execute complex application workflows identical to human visual comprehension.")
+    st.markdown("### References")
+    st.markdown("""
+    [1] B. Shneiderman, "Direct Manipulation: A Step Beyond Programming Languages," IEEE Computer, vol. 16, no. 8, pp. 57-69, 1983.  
+    [2] P. Fitts, "The Information Capacity of the Human Motor System in Controlling the Amplitude of Movement," Journal of Experimental Psychology, vol. 47, no. 6, pp. 381-391, 1954.  
+    [3] Y. Wu and T. Huang, "Vision-Based Gesture Recognition: A Review," Gesture-Based Communication in HCI, Springer, Berlin, 1999, pp. 103-115.  
+    [4] S. Mitra and T. Acharya, "Gesture Recognition: A Survey," IEEE Transactions on Systems, Man, and Cybernetics, vol. 37, no. 3, pp. 311-324, 2007.  
+    [5] D. Beazley, "Understanding the Python GIL," in PyCon Proceedings, 2010.  
+    [6] A. Silberschatz, P. B. Galvin, and G. Gagne, Operating System Concepts, 10th ed. Wiley, 2018.  
+    [7] R. J. K. Jacob, "The use of eye movements in human-computer interaction techniques: what you look at is what you get," ACM Transactions on Information Systems, 1991.  
+    [8] P. Viola and M. Jones, "Rapid Object Detection using a Boosted Cascade of Simple Features," in CVPR, 2001, pp. 511-518.  
+    [9] M. Abadi et al., "TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems," OSDI, 2016.  
+    [10] J. Shotton et al., "Real-Time Human Pose Recognition in Parts from Single Depth Images," in CVPR, 2011.  
+    [11] T. Soukupova and J. Cech, "Real-Time Eye Blink Detection using Facial Landmarks," 21st Computer Vision Winter Workshop, 2016.  
+    [12] S. Oviatt, "Multimodal Interfaces," Handbook of Human-Computer Interaction, Erlbaum, 1999.  
+    [13] A. Graves, A. Mohamed, and G. Hinton, "Speech Recognition with Deep Recurrent Neural Networks," in ICASSP, 2013, pp. 6645-6649.  
+    [14] R. A. Bolt, "Put-That-There: Voice and Gesture at the Graphics Interface," SIGGRAPH, vol. 14, no. 3, pp. 262-270, 1980.  
+    [15] S. Poria, E. Cambria, D. Hazarika, and P. Majumder, "A Review of Affective Computing: From Unimodal Analysis to Multimodal Fusion," Information Fusion, vol. 37, pp. 98-125, 2017.  
+    [16] C. Lugaresi et al., "MediaPipe: A Framework for Building Perception Pipelines," arXiv preprint arXiv:1906.08172, 2019.  
+    [17] G. Rossum and F. L. Drake, The Python Language Reference, Python Software Foundation, 2010.  
+    [18] Z. Ren, J. Yuan, J. Meng, and Z. Zhang, "Robust Part-Based Hand Gesture Recognition Using Kinect Sensor," IEEE Transactions on Multimedia, 2013.  
+    [19] Apple Human Interface Guidelines, "Designing for Touch and Gesture," Apple Inc., 2022.  
+    [20] Microsoft Research, "Windows Automation API and HCI Control Sets," Microsoft Corp., 2021.  
+    [21] Google AI, "FaceMesh: High-Fidelity Performance for Real-Time AR," Google Research Journal, 2020.  
+    [22] J. S. Hunter, "The Exponentially Weighted Moving Average," Journal of Quality Technology, vol. 18, no. 4, pp. 203–210, 1986.  
+    [23] OpenAI, "Large Language Models and the Evolution of Semantic Reasoners," Technical Report, 2023.  
+    """)
 
     st.markdown("<br><hr><center><p style='color:#8b949e;'>Engineered for academic evaluation. Open-Sourced purely for Native Windows Frameworks.</p></center>", unsafe_allow_html=True)
