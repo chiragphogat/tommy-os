@@ -401,18 +401,14 @@ def execute_logic_chain(full_command):
             results.append("Looking...")
             speak("Let me look at your screen.")
             
-            import tempfile, uuid
-            shot_path = os.path.join(tempfile.gettempdir(), f"vision_{uuid.uuid4().hex}.png")
-            
-            with ui_lock:
-                pyautogui.screenshot(shot_path)
-            
-            answer = ask_local_vision(query, shot_path)
+            try:
+                from src.rag_vision import trigger_visual_rag
+                answer = trigger_visual_rag(query)
+            except ImportError:
+                answer = "Vision module Offline. Could not link RAG logic."
+                
             speak(answer)
             results.append("Vision Analyzed")
-            
-            try: os.remove(shot_path)
-            except: pass
             continue
 
         # --- 🧠 PERSISTENT MEMORY ---
