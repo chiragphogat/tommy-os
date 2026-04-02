@@ -160,8 +160,8 @@ with tab2:
         * **Week 11-12:** Latency optimization and final documentation packaging.
         """)
         
-    with st.expander("🚀 Future Enhancements", expanded=False):
-        st.markdown("Subsequent iterations of the T.O.M.M.Y. kernel will prioritize **Retrieval-Augmented Generation (RAG) UI Parsing**. By granting the offline LLM access to real-time `cv2` screenshot buffers, the language model will dynamically read legacy Graphical User Interfaces and execute complex application workflows identical to human visual comprehension.")
+    with st.expander("🚀 Architectural Update v2.0: Deep Visual RAG Fusion", expanded=False):
+        st.markdown("**(Successfully Implemented)** Moving past original project scope, the T.O.M.M.Y. logic core has now been upgraded with **Retrieval-Augmented Generation (RAG) UI Parsing** (`src/rag_vision.py`). By granting the offline LLM real-time access to the desktop GUI via Base64 RAM screenshots, the local `moondream` neural engine can directly 'see' legacy software applications and dictate physical context without bouncing images off external cloud APIs.")
 
 
 # =========================================================================

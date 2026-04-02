@@ -59,7 +59,7 @@ echo [INFO] Injecting Local AI Weights... Do NOT close this window.
 echo Pulling Primary Logic Core (llama3)...
 call ollama pull llama3:8b-instruct-q4_K_M
 echo Pulling Screen Vision Core (moondream)...
-call ollama pull moondream:latest
+call ollama pull moondream
 goto FINISH
 
 
