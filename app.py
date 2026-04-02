@@ -90,25 +90,25 @@ with tab1:
     with col1:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         try:
-            st.image("assets/chirag.jpg", use_column_width=True)
+            st.image("assets/chirag.jpeg", use_column_width=True)
         except:
-            st.warning("[Photo Missing: Add 'chirag.jpg' to assets/]")
+            st.warning("[Photo Missing: Add 'chirag.jpeg' to assets/]")
         st.markdown("<h3 style='margin-bottom:0;'>Chirag Phogat</h3><p style='color:#8b949e;'>Lead Systems Architecture</p></div>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         try:
-            st.image("assets/chava.jpg", use_column_width=True)
+            st.image("assets/chava.jpeg", use_column_width=True)
         except:
-            st.warning("[Photo Missing: Add 'chava.jpg' to assets/]")
+            st.warning("[Photo Missing: Add 'chava.jpeg' to assets/]")
         st.markdown("<h3 style='margin-bottom:0;'>Chava Harshavardhan</h3><p style='color:#8b949e;'>Gaze Estimation & Eye Control Integration</p></div>", unsafe_allow_html=True)
 
     with col3:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         try:
-            st.image("assets/lalmalsawm.jpg", use_column_width=True)
+            st.image("assets/lalmalsawm.jpeg", use_column_width=True)
         except:
-            st.warning("[Photo Missing: Add 'lalmalsawm.jpg' to assets/]")
+            st.warning("[Photo Missing: Add 'lalmalsawm.jpeg' to assets/]")
         st.markdown("<h3 style='margin-bottom:0;'>Lalmalsawm Guite</h3><p style='color:#8b949e;'>Lead Researcher & Concept Iteration</p></div>", unsafe_allow_html=True)
 
 
