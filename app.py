@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 
 st.set_page_config(
     page_title="T.O.M.M.Y. OS",
@@ -29,16 +30,7 @@ st.markdown("""
             font-weight: 600;
         }
         .stTabs [aria-selected="true"] { color: #58a6ff !important; background-color: #1f2428;}
-        .glass-card {
-            background: rgba(22, 27, 34, 0.7);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(4px);
-            text-align: center;
-        }
+        
         .warning-box {
             background-color: #2D1115;
             border-left: 4px solid #F85149;
@@ -55,7 +47,7 @@ st.title("T.O.M.M.Y. OS")
 st.markdown("### A Unified Multimodal Framework for Real-Time OS Control using MediaPipe, Gaze Estimation, and Speech Recognition")
 
 # --- MULTI-TAB ARCHITECTURE ---
-tab1, tab2, tab3 = st.tabs(["🚀 Project Synopsis", "📊 Comparative Analysis", "📄 Research Deep-Dive"])
+tab1, tab2, tab3 = st.tabs(["🚀 Project Synopsis", "📊 Comparative Analysis & Methodology", "📄 Digital Research Hub"])
 
 # =========================================================================
 # TAB 1: SYNOPSIS & THE PITCH
@@ -65,7 +57,7 @@ with tab1:
     <div class="warning-box">
         <strong>⚠️ ACADEMIC DEPLOYMENT NOTICE</strong><br><br>
         T.O.M.M.Y represents a major shift from traditional Web AI. It is an <strong>Operating System kernel wrapper</strong> designed locally for Windows machines. It physically hijacks mouse parameters, hardware drivers (brightness/volume), and display elements using localized CPU threading.<br><br>
-        Because this Web Server operates on headless Linux constraints without a physical screen or microphone, this site serves strictly as our <strong>Interactive Digital Portfolio</strong>. To test the mathematical physics, clone the underlying OS source code below!
+        Because this Web Server operates on headless Linux constraints without a physical screen or microphone, this site serves strictly as our <strong>Interactive Digital Project Portfolio</strong>. To test the mathematical physics natively, clone the codebase below!
     </div>
     """, unsafe_allow_html=True)
 
@@ -78,7 +70,7 @@ with tab1:
     
     We engineered T.O.M.M.Y. to solve this directly. Instead of mashing heavy vision models and offline Large Language Models (LLMs) into one sluggish Python script—which instantly hits the GIL (Global Interpreter Lock) and freezes your computer—we tore down the basic architecture. We divided the system into entirely isolated subprocesses that communicate via lightning-fast JSON injection. 
 
-    Now, you can execute basic commands instantaneously off pure mathematical geometry, and run massive localized Language Models completely offline in the background.
+    Now, you can execute basic commands instantaneously off pure mathematical geometry, and run massive localized Language Models completely offline in the background without severe context-switching lag.
     """)
 
     st.markdown("---")
@@ -88,28 +80,28 @@ with tab1:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        try:
-            st.image("assets/chirag.jpeg", use_column_width=True)
-        except:
-            st.warning("[Photo Missing: Add 'chirag.jpeg' to assets/]")
-        st.markdown("<h3 style='margin-bottom:0;'>Chirag Phogat</h3><p style='color:#8b949e;'>Lead Systems Architecture</p></div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            try:
+                st.image("assets/chirag.jpeg", use_column_width=True)
+            except:
+                st.warning("[Photo Missing: Add 'chirag.jpeg' to assets/]")
+            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Chirag Phogat</h3><p style='color:#8b949e; text-align:center;'>Lead Systems Architecture</p>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        try:
-            st.image("assets/chava.jpeg", use_column_width=True)
-        except:
-            st.warning("[Photo Missing: Add 'chava.jpeg' to assets/]")
-        st.markdown("<h3 style='margin-bottom:0;'>Chava Harshavardhan</h3><p style='color:#8b949e;'>Gaze Estimation & Eye Control Integration</p></div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            try:
+                st.image("assets/chava.jpeg", use_column_width=True)
+            except:
+                st.warning("[Photo Missing: Add 'chava.jpeg' to assets/]")
+            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Chava Harshavardhan</h3><p style='color:#8b949e; text-align:center;'>Gaze Estimation & Eye Control Integration</p>", unsafe_allow_html=True)
 
     with col3:
-        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        try:
-            st.image("assets/lalmalsawm.jpeg", use_column_width=True)
-        except:
-            st.warning("[Photo Missing: Add 'lalmalsawm.jpeg' to assets/]")
-        st.markdown("<h3 style='margin-bottom:0;'>Lalmalsawm Guite</h3><p style='color:#8b949e;'>Lead Researcher & Concept Iteration</p></div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            try:
+                st.image("assets/lalmalsawm.jpeg", use_column_width=True)
+            except:
+                st.warning("[Photo Missing: Add 'lalmalsawm.jpeg' to assets/]")
+            st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Lalmalsawm Guite</h3><p style='color:#8b949e; text-align:center;'>Lead Researcher & Concept Iteration</p>", unsafe_allow_html=True)
 
 
 # =========================================================================
@@ -120,82 +112,97 @@ with tab2:
     st.markdown("Traditional systems force real-time camera math onto the dedicated GPU (CUDA). By doing absolute comparative analysis against native hardware bounds, we achieved staggering latency drops by keeping matrix calculations exclusively onto the CPU cache.")
     
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("MediaPipe Frame Latency", "18 ms", "Over 60 FPS", delta_color="normal")
-    m2.metric("Ocular Iris Tracking", "22 ms", "Blink/Wink Isolation", delta_color="normal")
-    m3.metric("Wake-Phoneme Verification", "14 ms", "Zero Audio Delay", delta_color="normal")
-    m4.metric("Avg OS Responsiveness", "< 20ms", "Instant Driver Hooks", delta_color="normal")
+    m1.metric("MediaPipe Frame Latency", "18 ms", "Over 60 FPS")
+    m2.metric("Ocular Iris Tracking", "22 ms", "Blink/Wink Isolation")
+    m3.metric("Wake-Phoneme Verification", "14 ms", "Zero Audio Delay")
+    m4.metric("Avg OS Responsiveness", "< 20ms", "Instant Driver Hooks")
 
     st.markdown("---")
-    st.markdown("### 📊 GPU CUDA Overhead vs Optimized Local XNNPACK CPU")
+    st.markdown("## 📊 Methodology & Platform Documentation")
+
+    st.markdown("### 1. Objectives and Scope")
+    st.markdown("""
+    The primary objective of this comparative analysis is to evaluate the effectiveness of the proposed T.O.M.M.Y. (Tactile, Optical, and Multimodal Machine Yield) system natively against existing intelligent assistants and human–computer interaction frameworks. 
     
-    # Building the comparative Data Frame natively
-    chart_data = {
-        "Latency Per Frame (ms)": {"Standard PCIe CUDA Bus Transfer": 45, "T.O.M.M.Y. CPU XNNPACK Delegate": 18}
-    }
+    The scope of this comparison is strictly limited to multimodal interaction systems and widely used intelligent assistants that operate via network endpoints. Our analysis evaluates functional capability, offline architecture intelligence, and multi-process structural integrity.
+    """)
+
+    st.markdown("### 2. Selection of Systems for Comparison")
+    st.markdown("""
+    * **Siri / Google Assistant / Alexa:** Representative of commercial, voice-driven network intelligent assistants.
+    * **ChatGPT (Web-App UI):** Represents an advanced language-based intelligence model with restricted multimodal perception (No OS Driver access).
+    * **Traditional Human–Computer Interaction (HCI) Systems:** Includes legacy keyboard, mouse, and touch-based physical interfaces.
+    * **T.O.M.M.Y. (Proposed):** An offline standalone multimodal OS wrapper integrating zero-latency acoustic phoneme tracking, geometric hand manipulation (tactile), and facial coordinate estimation (optical).
+    """)
+
+    st.markdown("### 3. Comprehensive Feature Matrix")
+    st.markdown("We isolated performance criteria into latency limits, mathematical intent accuracy, local resource usage, and interaction modality sets:")
     
-    st.bar_chart(chart_data["Latency Per Frame (ms)"], color="#58a6ff", height=400)
-    st.caption("Paradoxically, executing raw matrix math exclusively on the generic CPU (18ms) vastly out-performed pushing data to the dedicated CUDA GPU (45ms). This empirical data absolutely proves PCIe transfer overhead completely chokes tiny 480p real-time camera arrays.")
+    st.markdown("""
+    | Criterion             | Existing Cloud Assistants (Alexa/Google) | ChatGPT / Gen-AI Web Wrappers | Traditional HCI (Mouse/Keys) | **T.O.M.M.Y. OS Kernel** |
+    | :---                  | :---                                     | :---                          | :---                         | :---                     |
+    | **Primary Input**     | Web-Synced Voice                         | Cloud Text / Voice API        | Physical Actuators           | **Spatial Geometry, Local Voicetrack, Eye EAR** |
+    | **OS Hardware Hooks** | Extremely Low (API Locked)               | Null (Sandboxed)              | Direct Driver Link           | **Direct Thread Driver Injection** |
+    | **Process Latency**   | > 1500ms (Network Bounds)                | > 2000ms (LLM Generation)     | < 10ms                       | **< 20ms Base Hardware Loop** |
+    | **Context Awareness** | Medium (Text History)                    | Very High (Text History)      | None                         | **High (Visual UI & Audio State)** |
+    | **Offline Capability**| Completely Dead (Requires Internet)      | Completely Dead               | Always Active                | **100% Offline Multi-Process Payload** |
+    | **Error Handling**    | Default to "I don't understand"          | High Redundancy               | Null                         | **Self-Healing Python Regeneration** |
+    """)
 
-    st.markdown("---")
-    st.markdown("### 🖥️ Real-Time System Command Protocol (Simulated Logs)")
-    st.code("""
-============================================================
- 🧠 BOOTING T.O.M.M.Y. OS MASTER KERNEL V3.2 (Monolithic) 🧠
-============================================================
-[OS] IPC Subprocess Bridge Initialized (Hand Tracking Default)
-[OS] Allocating Engine 1: Auditory Intelligence & UI HUD...
-[OS] Allocating Engine 2: Spatial Mathematics...
+    st.markdown("### 4. Interpretation and Execution Findings")
+    st.markdown("""
+    The empirical analysis reveals a massive architectural vulnerability in commercial assistant frameworks: they rely heavily on synchronous, server-bound connections. If network lag persists, the system fails to interact with ambiguity. In contrast, **T.O.M.M.Y.** utilizes localized decoupled IPC (Inter-Process Communication) loops to interpret human intent natively.
+    
+    * **Latency Victory:** T.O.M.M.Y. demonstrates absolute superiority in intent recognition speeds. Visual inputs execute raw $X/Y$ geometric math locally in 18ms without pinging a server.
+    * **Resource Offsetting:** Standard cloud AI executes calculations on a billion-dollar external server cluster. Because T.O.M.M.Y. runs offline, local resource utilization (CPU/RAM) is considerably higher. However, we offset this payload structurally via the *Asymmetric Neural Invocation* engine, only running the heavy `llama3` local model when complex syntax is triggered, keeping background RAM clear.
+    """)
 
-✅ [OS_SYS] All Neural Pipelines Active.
-
-[CAMERA] Vision Kernel online. Tracking Geometric bounds (18ms).
-[MIC] PvRecorder hardware locked. Ambient Room scanning initialized...
-[HOTWORD] 'Hey Tommy' detected natively.
-[MIC OS DRIVER YIELDED] Shutting down background arrays...
-[LISTENING] Speak now...
-   ↳ [HEARD RAW]: "Cut the brightness immediately and launch visual studio"
-[MIC OS DRIVER ACQUIRED] Restarting PvRecorder lock...
-
->> EXECUTING HARDWARE LOGIC -> Firing daemon threads... SBC Drivers 0%.
->> EXECUTING OS LOGIC -> Executing strict Window UI deployment.
-    """, language="markdown")
-
+    st.markdown("### 5. Architectural Conclusion")
+    st.markdown("""
+    This comparative breakdown definitively confirms that T.O.M.M.Y. bridges the isolation between cloud-level conceptual reasoning and native low-level hardware actuation. The 12-Module Substructure provides a vastly more resilient, adaptive, and future-forward interface than any legacy HCI format evaluated today.
+    """)
 
 # =========================================================================
 # TAB 3: FULL PAPER EXPANDERS
 # =========================================================================
 with tab3:
     st.markdown("## 🔬 Digital Research Paper")
-    st.markdown("Tap the accordions below to expand and read the core methodologies ripped straight from our IEEE paper.")
+    st.markdown("Tap the accordions below to expand and read the core physics/execution methodologies ripped straight from our IEEE paper.")
     
     with st.expander("📝 Abstract & The Universal Failure Point", expanded=True):
+        st.info("The genesis of the T.O.M.M.Y. Operating platform")
         st.markdown("""
         Even now, computers keep us at our desks with keyboards and mice. Voice assistants are available, but if you ask one to drag and drop a file, it won't work. We made T.O.M.M.Y. to fix this. It's a hands-free wrapper that uses a regular webcam and microphone to take over Windows. 
         
         But getting there wasn't easy. When we tried to run heavy vision models and a talking AI at the same time in Python, the **GIL wall** hit right away, and the screen froze every time the bot spoke. Standard webcams also make it hard to judge depth (The camera thinks your hands got smaller when you lean back). We tore down the architecture to get around all of this, isolating processes into Inter-Process Communication networks.
         """)
         
-    with st.expander("⚙️ The Spacial Fix: Eradicating Distance Scaling", expanded=False):
+    with st.expander("⚙️ The Spatial Fix: Eradicating Distance Scaling", expanded=False):
         st.markdown("""
-        Standard OpenCV tracking uses Euclidean bounds (measuring pixels between fingers). This inherently shatters when a user leans back in their chair. T.O.M.M.Y bypasses this by utilizing pure **Y-axis delta-coordinate math**. It strictly measures if a fingertip is mathematically positioned *below* the physical plane of a knuckle (`tip.y > pip.y`), rendering the tracking immune to physical depth.
+        Standard OpenCV hand tracking uses Euclidean bounding distance boxes (measuring pixels between fingers). This inherently shatters when a user leans back in their chair, as the camera scale shrinks. 
+        
+        T.O.M.M.Y bypasses this by utilizing pure **Y-axis delta-coordinate math**. It strictly measures if a fingertip is mathematically positioned *below* the physical plane of a knuckle (`tip.y > pip.y`), rendering the tracking system entirely immune to physical camera depth scaling.
         """)
 
     with st.expander("🛠️ Damping Cursor Jitters (Alpha Mechanics)", expanded=False):
         st.markdown("""
-        Humans can't hold their hands perfectly still in mid-air. Mapping a fingertip directly to a canvas resulted in a mouse cursor that violently shook. We silenced the shake by feeding the `pyautogui` coordinate stream directly through an **Exponential Moving Average** algorithm. Setting the alpha parameter to `a = 0.55` perfectly deleted the biological jitter while keeping the cursor sharp.
+        Humans can't hold their hands perfectly still in mid-air. Mapping a fingertip directly to a native 1080p canvas resulted in a mouse cursor that violently shook, making pixel-perfect clicks impossible. We silenced the shake by feeding the `pyautogui` coordinate stream directly through an **Exponential Moving Average** algorithm block. Setting the alpha threshold heavily to `a = 0.55` eradicated biological jitter while preserving execution snap.
         """)
         st.latex(r"C_{coord_t} = (0.55 \times V_{raw}) + (0.45 \times C_{coord_{t-1}})")
 
     with st.expander("🎙️ The Auditory Hardware Deadlock Patch", expanded=False):
         st.markdown("""
-        Windows OS inherently restricts active microphone arrays to a single port process. Attempting to run a Wake-Word listener alongside a Command Listener caused catastrophic Thread crashing. We engineered an aggressive, dynamic `recorder.stop()` injection protocol. The exact millisecond the wake word is detected, the audio array is forcefully yielded.
+        Windows OS inherently restricts active microphone arrays to a single port process. Attempting to run a Wake-Word listener (`pvporcupine`) alongside an active Command Listener (`speech_recognition`) caused catastrophic threading crashes. 
+        
+        We engineered an aggressive, dynamic `recorder.stop()` injection protocol under the hood. The exact millisecond the wake word is detected locally, the audio array is forcefully yielded and unbound from RAM, allowing the secondary command pipeline flawless operation without deadlocks.
         """)
         
     with st.expander("👁️ Eye Control & The Missing Thumb Bug", expanded=False):
         st.markdown("""
-        Because regular webcams shoot straight-on, people's thumbs naturally hide behind the curve of their palms. The code would drop the vision lock if it lost a thumb. We mathematically dropped the gate requirement down. 
-        Once locked into gaze mode, the **Eye Aspect Ratio** filters out random blinks and only clicks the mouse if the user throws a hard, deliberate wink.
+        Because regular webcams shoot rigidly straight-on, people's thumbs naturally hide behind the curve of their palms. The initial code would drop the boolean vision lock entirely if it lost a thumb out of frame. We mathematically bypassed this gating requirement natively. 
+        
+        Once locked securely into gaze mode, the **Eye Aspect Ratio (EAR)** system dynamically filters out random biological blinks, successfully executing a system mouse click only if the user throws a hard, deliberate optic wink constraint.
         """)
         st.latex(r"EAR_{wink} = \frac{||P_2 - P_6|| + ||P_3 - P_5||}{2||P_1 - P_4||}")
 
-    st.markdown("<br><hr><center><p style='color:#8b949e;'>Engineered for academic evaluation. See GitHub repository for compilation guidelines.</p></center>", unsafe_allow_html=True)
+    st.markdown("<br><hr><center><p style='color:#8b949e;'>Engineered for academic evaluation. Open-Sourced purely for Native Windows Frameworks.</p></center>", unsafe_allow_html=True)
