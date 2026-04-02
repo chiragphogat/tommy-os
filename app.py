@@ -1,5 +1,8 @@
 import streamlit as st
 import base64
+import cv2
+import numpy as np
+import mediapipe as mp
 
 st.set_page_config(
     page_title="T.O.M.M.Y. OS Project Showcase",
@@ -83,36 +86,47 @@ st.markdown("""[🚀 **Launch Full GitHub Repository Here**](https://github.com/
 st.divider()
 
 # --- DEMO TERMINAL SECTION ---
-st.markdown("## 🎮 Interactive System Demonstration")
-st.markdown("Because we cannot hook directly into your local webcam from this web server, here is a simulated representation of the T.O.M.M.Y. Terminal Interface processing live commands.")
+st.markdown("## 🎮 Interactive Vision Demonstration")
+st.markdown("While this server cannot physically move your mouse, we can demonstrate the exact **Neural Hand-Tracking mathematics** Tommy utilizes to process spatial geometry!")
 
-demo_expander = st.expander("▶️ Watch Live Console Execution", expanded=True)
+demo_expander = st.expander("👁️ Try the Vision Engine Architecture (Requires Camera)", expanded=True)
 with demo_expander:
-    st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ") # PLACEHOLDER
-    st.caption("*(Note: Replace the URL array above in `app.py` with your literal recorded Demo YouTube video!)*")
+    st.markdown("**Hold your hand up to the camera and take a snapshot to test the MediaPipe geometric mapping framework:**")
+    picture = st.camera_input("Vision Engine Input Stream")
     
-    st.markdown("**Simulated Local Logging Engine:**")
-    st.code("""
-============================================================
- 🧠 BOOTING T.O.M.M.Y. OS MASTER KERNEL V3.2 (Monolithic) 🧠
-============================================================
-[OS] IPC Subprocess Bridge Initialized (Hand Tracking Default)
-[OS] Allocating Engine 1: Auditory Intelligence & UI HUD...
-[OS] Allocating Engine 2: Spatial Mathematics (CV2)...
-
-✅ [OS_SYS] All Neural Pipelines Active.
-
-[CAMERA] Vision Kernel online. Tracking 21 Geometric point targets.
-[MIC] PvRecorder hardware locked. Ambient Room scanning initiated...
-[HOTWORD] 'Hey Tommy' detected natively.
-[MIC OS DRIVER YIELDED] Shutting down background arrays...
-[LISTENING] Speak now...
-   ↳ [HEARD]: "Turn off the brightness and open youtube"
-[MIC OS DRIVER ACQUIRED] Restarting PvRecorder...
-
->> EXECUTING HARDWARE LOGIC -> Dimmimg SBC Drivers to 0%...
->> EXECUTING OS LOGIC -> Executing browser automation for: YouTube...
-    """, language="markdown")
+    if picture:
+        # Load the image array natively
+        bytes_data = picture.getvalue()
+        cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+        
+        # Initiate MediaPipe Native Geometry Parsing
+        mp_hands = mp.solutions.hands
+        mp_drawing = mp.solutions.drawing_utils
+        
+        with mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5) as hands:
+            results = hands.process(cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB))
+            
+            if results.multi_hand_landmarks:
+                st.success("✅ **Spatial Hit!** Tommy successfully mapped your geometrical skeleton structure.")
+                for hand_landmarks in results.multi_hand_landmarks:
+                    mp_drawing.draw_landmarks(
+                        cv2_img, 
+                        hand_landmarks, 
+                        mp_hands.HAND_CONNECTIONS,
+                        mp_drawing.DrawingSpec(color=(88, 166, 255), thickness=2, circle_radius=4), # Blue
+                        mp_drawing.DrawingSpec(color=(255, 255, 255), thickness=2, circle_radius=2)  # White
+                    )
+                    
+                    # Core Y-Axis Math Simulation
+                    tip_y = hand_landmarks.landmark[8].y  # Index Finger Tip
+                    pip_y = hand_landmarks.landmark[6].y  # Index Finger Knuckle
+                    
+                    st.code(f">>> Processing Y-Axis Delta...\nIndex Tip Y: {tip_y:.4f}\nIndex Knuckle Y: {pip_y:.4f}\nGeometry Result: {'Wand Active (Tip above Knuckle)' if tip_y < pip_y else 'Wand Disabled'}")
+            else:
+                st.warning("❌ No spatial hand structures detected. Make sure your hand is fully in the frame!")
+                
+        # Return processed image to browser natively
+        st.image(cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB), channels="RGB")
 
 st.divider()
 
@@ -168,7 +182,7 @@ with t2:
     st.markdown("""
     <div class="team-box">
         <div class="team-name">Chava Harshavardhan</div>
-        <p style="color:#8b949e; font-size: 0.9rem;">Core Engineering & Integration</p>
+        <p style="color:#8b949e; font-size: 0.9rem;">Gaze Estimation & Eye Control</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -176,7 +190,7 @@ with t3:
     st.markdown("""
     <div class="team-box">
         <div class="team-name">Lalmalsawm Guite</div>
-        <p style="color:#8b949e; font-size: 0.9rem;">Operations & OS Pipeline Optimization</p>
+        <p style="color:#8b949e; font-size: 0.9rem;">Lead Researcher & Concept Ideation</p>
     </div>
     """, unsafe_allow_html=True)
 
