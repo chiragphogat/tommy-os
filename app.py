@@ -315,7 +315,55 @@ with tab3:
     But if the user leaned back in their chair, the camera scaled their hand down. Suddenly, a severe pinch only measured 12 pixels wide on-screen. To hit the 30-pixel threshold, you had to completely mash your fingers together uncomfortably. Our fix was simple but wildly effective: we blew up the Euclidean hit-box boundary to a massive 55 pixels. By forcing the collision zones to overlap heavily, the math triggers an identical click whether the user is leaning into the monitor or slouching four feet away.
     """)
     st.latex(r"\text{Collision Box Target} = \sqrt{(D_x - T_x)^2 + (D_y - T_y)^2} < 55")
-    st.markdown("**Fig 4.** We strictly track the mathematical bounding distance between joint 4 (thumb tip) and joint 8 (index tip).")
+    
+    # FIGURE 4: Hand
+    st.markdown("""
+        <div style="text-align: center; margin: 20px 0;">
+        <svg width="250" height="300" viewBox="-2.3 -4.5 4.5 5" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .line { stroke: #8b949e; stroke-width: 0.05; }
+                .point { fill: #58a6ff; }
+                .bound { stroke: #F85149; stroke-width: 0.06; stroke-dasharray: 0.1; }
+            </style>
+            <!-- Thumb -->
+            <line class="line" x1="0" y1="0" x2="0.5" y2="-0.6"/>
+            <line class="line" x1="0.5" y1="-0.6" x2="0.8" y2="-1.2"/>
+            <line class="line" x1="0.8" y1="-1.2" x2="1.1" y2="-1.7"/>
+            <line class="line" x1="1.1" y1="-1.7" x2="1.4" y2="-2.2"/>
+            <!-- Index -->
+            <line class="line" x1="0" y1="0" x2="-0.2" y2="-0.8"/>
+            <line class="line" x1="-0.2" y1="-0.8" x2="-0.2" y2="-1.6"/>
+            <line class="line" x1="-0.2" y1="-1.6" x2="-0.2" y2="-2.4"/>
+            <line class="line" x1="-0.2" y1="-2.4" x2="-0.2" y2="-3.2"/>
+            <!-- Bounding Box Line between 4 and 8 -->
+            <line class="bound" x1="1.4" y1="-2.2" x2="-0.2" y2="-3.2"/>
+            <!-- Middle -->
+            <line class="line" x1="0" y1="0" x2="-0.7" y2="-0.8"/>
+            <line class="line" x1="-0.7" y1="-0.8" x2="-0.7" y2="-1.8"/>
+            <line class="line" x1="-0.7" y1="-1.8" x2="-0.7" y2="-2.8"/>
+            <line class="line" x1="-0.7" y1="-2.8" x2="-0.7" y2="-3.8"/>
+            <!-- Ring -->
+            <line class="line" x1="0" y1="0" x2="-1.2" y2="-0.7"/>
+            <line class="line" x1="-1.2" y1="-0.7" x2="-1.2" y2="-1.6"/>
+            <line class="line" x1="-1.2" y1="-1.6" x2="-1.2" y2="-2.5"/>
+            <line class="line" x1="-1.2" y1="-2.5" x2="-1.2" y2="-3.3"/>
+            <!-- Pinky -->
+            <line class="line" x1="0" y1="0" x2="-1.7" y2="-0.6"/>
+            <line class="line" x1="-1.7" y1="-0.6" x2="-1.7" y2="-1.3"/>
+            <line class="line" x1="-1.7" y1="-1.3" x2="-1.7" y2="-2.0"/>
+            <line class="line" x1="-1.7" y1="-2.0" x2="-1.7" y2="-2.7"/>
+            
+            <!-- Nodes -->
+            <circle cx="0" cy="0" r="0.1" class="point"/>
+            <circle cx="0.5" cy="-0.6" r="0.1" class="point"/><circle cx="0.8" cy="-1.2" r="0.1" class="point"/><circle cx="1.1" cy="-1.7" r="0.1" class="point"/><circle cx="1.4" cy="-2.2" r="0.1" fill="#F85149"/>
+            <circle cx="-0.2" cy="-0.8" r="0.1" class="point"/><circle cx="-0.2" cy="-1.6" r="0.1" class="point"/><circle cx="-0.2" cy="-2.4" r="0.1" class="point"/><circle cx="-0.2" cy="-3.2" r="0.1" fill="#F85149"/>
+            <circle cx="-0.7" cy="-0.8" r="0.1" class="point"/><circle cx="-0.7" cy="-1.8" r="0.1" class="point"/><circle cx="-0.7" cy="-2.8" r="0.1" class="point"/><circle cx="-0.7" cy="-3.8" r="0.1" class="point"/>
+            <circle cx="-1.2" cy="-0.7" r="0.1" class="point"/><circle cx="-1.2" cy="-1.6" r="0.1" class="point"/><circle cx="-1.2" cy="-2.5" r="0.1" class="point"/><circle cx="-1.2" cy="-3.3" r="0.1" class="point"/>
+            <circle cx="-1.7" cy="-0.6" r="0.1" class="point"/><circle cx="-1.7" cy="-1.3" r="0.1" class="point"/><circle cx="-1.7" cy="-2.0" r="0.1" class="point"/><circle cx="-1.7" cy="-2.7" r="0.1" class="point"/>
+        </svg>
+        </div>
+    """, unsafe_allow_html=True)
+    st.caption("**Fig 4.** We strictly track the mathematical bounding distance between joint 4 (thumb tip) and joint 8 (index tip).")
 
     st.markdown("""
     #### D. Damping Cursor Jitters
@@ -330,7 +378,31 @@ with tab3:
     Once locked into gaze mode, the Eye Aspect Ratio filters out random blinks and only clicks the mouse if the user throws a hard, deliberate wink [11].
     """)
     st.latex(r"EAR_{wink} = \frac{||P_2 - P_6|| + ||P_3 - P_5||}{2||P_1 - P_4||}")
-    st.markdown("**Fig 5.** Calculating the gap between Periungual Region markers 2 and 6 lets us measure blinks exactly without relying on neural nets.")
+    # FIGURE 5: Eye Mesh
+    st.markdown("""
+        <div style="text-align: center; margin: 20px 0;">
+        <svg width="250" height="150" viewBox="-0.5 -1 2.5 2" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .line { stroke: #58a6ff; stroke-width: 0.05; }
+                .point { fill: #c9d1d9; }
+                .vert { stroke: #F85149; stroke-width: 0.04; stroke-dasharray: 0.08; }
+            </style>
+            <!-- Polygon -->
+            <polygon points="0,0 0.5,-0.3 1,-0.4 1.5,0 1,0.4 0.5,0.3" class="line" fill="none"/>
+            <!-- Equation Markers -->
+            <line class="vert" x1="0.5" y1="-0.3" x2="0.5" y2="0.3"/>
+            <line class="vert" x1="1" y1="-0.4" x2="1" y2="0.4"/>
+            <!-- Points -->
+            <circle cx="0" cy="0" r="0.06" class="point"/>
+            <circle cx="0.5" cy="-0.3" r="0.06" class="point"/>
+            <circle cx="1" cy="-0.4" r="0.06" class="point"/>
+            <circle cx="1.5" cy="0" r="0.06" class="point"/>
+            <circle cx="1" cy="0.4" r="0.06" class="point"/>
+            <circle cx="0.5" cy="0.3" r="0.06" class="point"/>
+        </svg>
+        </div>
+    """, unsafe_allow_html=True)
+    st.caption("**Fig 5.** Calculating the gap between Periungual Region markers 2 and 6 lets us measure blinks exactly without relying on neural nets.")
 
 
     st.markdown("---")
