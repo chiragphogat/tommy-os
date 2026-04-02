@@ -1,3 +1,4 @@
+#vision_engine.py
 import cv2
 import mediapipe as mp
 import pyautogui
@@ -8,8 +9,10 @@ import json
 from math import hypot
 from datetime import datetime
 import threading
+import screen_brightness_control as sbc
 
 pyautogui.FAILSAFE = False
+pyautogui.PAUSE = 0 # DELETES PYAUTOGUI's NATIVE 100ms THREAD-BLOCKING SLEEP (Core fix for "Lag")
 
 # --- LOAD MEDIAPIPE SOLUTIONS ONCE ---
 mp_hands = mp.solutions.hands
@@ -92,13 +95,12 @@ def run_vision_engine():
     plocX, plocY = 0, 0
     clocX, clocY = 0, 0
     ema_x, ema_y = 0, 0
-    alpha = 0.1 
+    alpha = 0.55 # Phase 24: Doubled Cursor Velocity (Lighting Fast smoothing)
     previous_pinch, previous_right_pinch = False, False
     dragging, swiping = False, False
     last_y, last_x = 0, 0
-    hand_current_mode = "NAVIGATION"
-    last_mode_switch_time = time.time()
-    mode_colors = {"NAVIGATION": (255, 0, 255), "WINDOW": (0, 255, 0), "BROWSER": (0, 255, 255), "SYSTEM": (0, 0, 255)}
+    hands_open_time = 0.0 # Phase 20: Restored Ignition Timer
+    last_hand_check_time, last_macro_time = 0.0, 0.0 # Phase 21: Dual-Core Hand Spooling & Macro Cooldowns
 
     # --- EYE STATE ---
     prev_x, prev_y = 0.0, 0.0
@@ -145,6 +147,9 @@ def run_vision_engine():
         if current_vision == "hand":
             results = hands.process(imgRGB)
             if results.multi_hand_landmarks:
+                hand_count = len(results.multi_hand_landmarks)
+                total_active_fingers = 0
+                
                 for hand_landmarks in results.multi_hand_landmarks:
                     mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                     landmarks = hand_landmarks.landmark
@@ -156,54 +161,165 @@ def run_vision_engine():
                     fingers = []
                     finger_joints = [(8, 6), (12, 10), (16, 14), (20, 18)]
                     for tip, pip in finger_joints:
-                        tip_x, tip_y = int(landmarks[tip].x * cam_w), int(landmarks[tip].y * cam_h)
-                        pip_x, pip_y = int(landmarks[pip].x * cam_w), int(landmarks[pip].y * cam_h)
-                        fingers.append(1 if np.hypot(tip_x - wrist_x, tip_y - wrist_y) > np.hypot(pip_x - wrist_x, pip_y - wrist_y) else 0)
+                        # Use pure geometric Y-axis math defined in the IEEE paper. 
+                        # This ignores depth-scaling shrinkage completely!
+                        fingers.append(1 if landmarks[tip].y < landmarks[pip].y else 0)
 
-                    thumb_ip_x, thumb_ip_y = int(landmarks[3].x * cam_w), int(landmarks[3].y * cam_h)
-                    thumb_extended = np.hypot(thumb_x - wrist_x, thumb_y - wrist_y) > np.hypot(thumb_ip_x - wrist_x, thumb_ip_y - wrist_y)
-                    is_thumbs_up = (fingers == [0, 0, 0, 0] and thumb_extended)
+                    # Thumb check using horizontal X-axis mapping against the opposite side of the hand (Pinky MCP).
+                    # Makes the thumb extension detection wildly stable regardless of camera angles.
+                    thumb_extended = abs(landmarks[4].x - landmarks[17].x) > abs(landmarks[3].x - landmarks[17].x)
+                    
+                    dist_index = np.hypot(index_x - thumb_x, index_y - thumb_y)
+                    dist_middle = np.hypot(middle_x - thumb_x, middle_y - thumb_y)
+                    ring_x, ring_y = int(landmarks[16].x * cam_w), int(landmarks[16].y * cam_h)
+                    dist_ring = np.hypot(ring_x - thumb_x, ring_y - thumb_y)
+                    pinky_x, pinky_y = int(landmarks[20].x * cam_w), int(landmarks[20].y * cam_h)
+                    dist_pinky = np.hypot(pinky_x - thumb_x, pinky_y - thumb_y) # Phase 24: Fixed dropped pinky bounds
+                    
+                    # Accumulate fingers for the Phase 20 global trigger
+                    total_active_fingers += sum(fingers) + (1 if thumb_extended else 0)
 
-                    if is_thumbs_up:
-                        if current_time - last_mode_switch_time > 1.5:
-                            modes = ["NAVIGATION", "WINDOW", "BROWSER", "SYSTEM"]
-                            hand_current_mode = modes[(modes.index(hand_current_mode) + 1) % len(modes)]
-                            last_mode_switch_time = current_time
-                            show_mode_popup(hand_current_mode, "HAND MODE")
+                    # --- PHASE 23: GEOMETRIC CLASSIFIERS ---
+                    is_index_only = fingers == [1, 0, 0, 0] and not thumb_extended
+                    is_dragging_text = dist_index < 55 and sum(fingers[1:]) == 0
+                    is_fist = fingers == [0, 0, 0, 0] and not thumb_extended
+                    is_peace = fingers == [1, 1, 0, 0] and not thumb_extended
+                    is_palm = fingers == [1, 1, 1, 1]
+                    is_rock = fingers == [1, 0, 0, 1] and not thumb_extended
+                    is_thumb_up = fingers == [0, 0, 0, 0] and thumb_extended
+                    is_shaka = fingers == [0, 0, 0, 1] and thumb_extended
 
-                    color = mode_colors.get(hand_current_mode, (255,255,255))
-                    cv2.putText(img, f"HAND: {hand_current_mode}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 3)
+                    # --- ACTIVE SPATIAL MATHEMATICS ---
+                    box_margin = 150
+                    cv2.rectangle(img, (box_margin, box_margin), (cam_w-box_margin, cam_h-box_margin), (255, 255, 255), 1)
+                    mapped_x = np.interp(index_x, (box_margin, cam_w-box_margin), (0, screen_w))
+                    mapped_y = np.interp(index_y, (box_margin, cam_h-box_margin), (0, screen_h))
+                    if ema_x == 0 and ema_y == 0: ema_x, ema_y = mapped_x, mapped_y
+                    ema_x, ema_y = (alpha * mapped_x) + ((1 - alpha) * ema_x), (alpha * mapped_y) + ((1 - alpha) * ema_y)
+                    
+                    # Track relative movement distance unconditionally for Swiping Macros
+                    clocX, clocY = ema_x, ema_y
 
-                    # --- Cursor Math ---
-                    if fingers == [1, 0, 0, 0] and not is_thumbs_up:
-                        box_margin = 150
-                        cv2.rectangle(img, (box_margin, box_margin), (cam_w-box_margin, cam_h-box_margin), color, 2)
-                        mapped_x = np.interp(index_x, (box_margin, cam_w-box_margin), (0, screen_w))
-                        mapped_y = np.interp(index_y, (box_margin, cam_h-box_margin), (0, screen_h))
-                        if ema_x == 0 and ema_y == 0: ema_x, ema_y = mapped_x, mapped_y
-                        ema_x, ema_y = (alpha * mapped_x) + ((1 - alpha) * ema_x), (alpha * mapped_y) + ((1 - alpha) * ema_y)
-                        clocX, clocY = ema_x, ema_y
+                    # 1️⃣ THE NAVIGATION WAND (Cursor & Editing)
+                    if is_index_only or is_dragging_text or is_fist:
+                        cv2.putText(img, "WAND / EDITING", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 3)
                         try: pyautogui.moveTo(clocX, clocY)
                         except: pass
-                        last_y, last_x = clocY, clocX
-
-                    # --- Context Macros ---
-                    if hand_current_mode == "NAVIGATION":
-                        if np.hypot(index_x - thumb_x, index_y - thumb_y) < 30: 
-                            if not previous_pinch: pyautogui.click(); previous_pinch = True
-                        else: previous_pinch = False
-                        if np.hypot(middle_x - thumb_x, middle_y - thumb_y) < 30 and fingers[1:] == [0,0,0]: 
-                            if not previous_right_pinch: pyautogui.rightClick(); previous_right_pinch = True
+                        
+                        # Selection / Left Click 
+                        if dist_index < 55: 
+                            if not previous_pinch: pyautogui.mouseDown(); previous_pinch = True
+                        else: 
+                            if previous_pinch: pyautogui.mouseUp(); previous_pinch = False
+                            
+                        # Dedicated Copy
+                        if dist_middle < 55: 
+                            if not previous_right_pinch: pyautogui.hotkey('ctrl', 'c'); previous_right_pinch = True
                         else: previous_right_pinch = False
-                        if sum(fingers) == 0 and not is_thumbs_up:
-                            if not dragging: pyautogui.mouseDown(); dragging = True
-                        else:
-                            if dragging: pyautogui.mouseUp(); dragging = False
+                        
+                        # Dedicated Paste
+                        if dist_ring < 55: 
+                            if not dragging: pyautogui.hotkey('ctrl', 'v'); dragging = True 
+                        else: dragging = False
+                        
+                        # Dedicated Close Tab / App (`Ctrl+W`)
+                        if dist_pinky < 55:
+                            if current_time - last_macro_time > 0.8: # Cooldown to prevent closing multiple tabs instantly
+                                pyautogui.hotkey('ctrl', 'w')
+                                last_macro_time = current_time
+                        
+                        # Sledgehammer Drag-Drop
+                        if is_fist:
+                            if not swiping: pyautogui.mouseDown(); swiping = True
+                        elif not is_fist and swiping:
+                            pyautogui.mouseUp(); swiping = False
+
+                    # 2️⃣ THE SCISSORS (Scroll)
+                    elif is_peace:
+                        cv2.putText(img, "SCROLL ENGINE", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 3)
+                        if current_time - last_macro_time > 0.05:
+                            dist_scissor = np.hypot(index_x - middle_x, index_y - middle_y)
+                            if dist_scissor < 40: pyautogui.scroll(100); last_macro_time = current_time
+                            elif dist_scissor > 85: pyautogui.scroll(-100); last_macro_time = current_time
+
+                    # 3️⃣ THE WINDOW MANAGER (Palm)
+                    elif is_palm:
+                        cv2.putText(img, "WINDOW SNAP", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                        if current_time - last_macro_time > 0.6:
+                            if clocX - last_x > 300: pyautogui.hotkey('alt', 'tab'); last_macro_time = current_time
+                            elif clocX - last_x < -300: pyautogui.hotkey('alt', 'shift', 'tab'); last_macro_time = current_time
+                            elif clocY - last_y < -200: pyautogui.hotkey('win', 'up'); last_macro_time = current_time
+                            elif clocY - last_y > 200: pyautogui.hotkey('win', 'down'); last_macro_time = current_time
+
+                    # 4️⃣ THE MEDIA CONTROLLER (Rock On)
+                    elif is_rock:
+                        cv2.putText(img, "MEDIA / TABS", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 3)
+                        if current_time - last_macro_time > 0.8:
+                            if clocX - last_x > 300: pyautogui.press('nexttrack'); last_macro_time = current_time
+                            elif clocX - last_x < -300: pyautogui.press('prevtrack'); last_macro_time = current_time
+                        if dist_index < 55:
+                            if not previous_pinch: pyautogui.press('playpause'); previous_pinch = True
+                        else: previous_pinch = False
+
+                    # 5️⃣ THE HARDWARE OVERLORD (Thumb/Shaka)
+                    elif is_thumb_up or is_shaka:
+                        cv2.putText(img, "HARDWARE LEVEL", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+                        if current_time - last_macro_time > 0.10:
+                            if hand_count == 1: # BRIGHTNESS
+                                try:
+                                    if is_thumb_up: threading.Thread(target=sbc.set_brightness, args=('-5',)).start()
+                                    if is_shaka: threading.Thread(target=sbc.set_brightness, args=('+5',)).start()
+                                except: pass
+                            else: # VOLUME
+                                if is_thumb_up: pyautogui.press('volumedown')
+                                if is_shaka: pyautogui.press('volumeup')
+                            last_macro_time = current_time
+
+                    # Anchor final comparative coordinates unconditionally
+                    last_y, last_x = clocY, clocX
+
+                # --- Phase 20: 10-Finger Eye Mode Ignition Sequence ---
+                # Check AFTER both hands have been independently mapped in the loop
+                if hand_count == 2:
+                    if total_active_fingers >= 8: # Phase 24: Lowered threshold from 10 to bypass Thumb depth-of-field failures!
+                        hands_open_time = current_time
+                    elif total_active_fingers == 0 and hands_open_time > 0:
+                        if current_time - hands_open_time < 2.0: # Bumped window slightly
+                            print("\n[⚡ BIO-GESTURE DETECTED] Both hands closed from Full Extension. Routing OS Power to Eye Engine...")
+                            try:
+                                with open(STATE_FILE, "r") as f: state_data = json.load(f)
+                            except: state_data = {}
+                            
+                            state_data["vision_mode"] = "eye"
+                            with open(STATE_FILE, "w") as f: json.dump(state_data, f)
+                            
+                            hands_open_time = 0.0 # Reset Trigger Data
+                            current_vision = "eye"
+                            last_active_vision = "" # Defeat the cached state immediately to force UI Pop-up render
 
         # =========================================================
         # 2️⃣ EYE TRACKING SYSTEM (FaceMesh)
         # =========================================================
         elif current_vision == "eye":
+            
+            # --- Phase 21: 2Hz Nano-Scale Hand Interceptor ---
+            if current_time - last_hand_check_time > 0.5:
+                small_img = cv2.resize(imgRGB, (256, 144)) # Shrink 96% of pixels away
+                hand_ping = hands.process(small_img)
+                if hand_ping.multi_hand_landmarks:
+                    print("\n[⚡ HAND DETECTED] Intercepted Physical Hand Movement. Snapping OS back to Hand Engine...")
+                    try:
+                        with open(STATE_FILE, "r") as f: d = json.load(f)
+                    except: d = {}
+                    d["vision_mode"] = "hand"
+                    with open(STATE_FILE, "w") as f: json.dump(d, f)
+                    
+                    last_hand_check_time = current_time
+                    current_vision = "hand"
+                    last_active_vision = "" # Forces immediate UI Notification
+                    continue # Sever FaceMesh logic for this frame to boost hand-off speed
+                last_hand_check_time = current_time
+
             results = face_mesh.process(imgRGB)
             if results.multi_face_landmarks:
                 landmarks = results.multi_face_landmarks[0].landmark
