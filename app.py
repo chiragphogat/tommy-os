@@ -3,6 +3,8 @@ import base64
 import cv2
 import numpy as np
 import mediapipe as mp
+import mediapipe.python.solutions.hands as mp_hands_lib
+import mediapipe.python.solutions.drawing_utils as mp_drawing_lib
 
 st.set_page_config(
     page_title="T.O.M.M.Y. OS Project Showcase",
@@ -100,8 +102,8 @@ with demo_expander:
         cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
         
         # Initiate MediaPipe Native Geometry Parsing
-        mp_hands = mp.solutions.hands
-        mp_drawing = mp.solutions.drawing_utils
+        mp_hands = mp_hands_lib
+        mp_drawing = mp_drawing_lib
         
         with mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5) as hands:
             results = hands.process(cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB))
