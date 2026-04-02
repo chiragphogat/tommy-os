@@ -170,6 +170,19 @@ with tab2:
 with tab3:
     st.markdown("## T.O.M.M.Y.: A Multi-Process Architecture for Hands-Free Windows Navigation Without Cloud Dependencies")
     st.caption("Chirag Phogat, Chava Harshavardhan, Lalmalsawm Guite, Kaushal Pathak")
+    
+    # PDF Download Button
+    try:
+        with open("assets/T.O.M.M.Y_Research.pdf", "rb") as pdf_file:
+            st.download_button(
+                label="📥 Download Original IEEE Paper (PDF)",
+                data=pdf_file,
+                file_name="TOMMY_Research_Paper.pdf",
+                mime="application/pdf",
+                type="primary"
+            )
+    except FileNotFoundError:
+        st.warning("⚠️ PDF File Not Found. Please compile the LaTeX file into `assets/T.O.M.M.Y_Research.pdf`.")
 
     st.markdown("---")
     st.markdown("### Abstract")
