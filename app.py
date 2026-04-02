@@ -1,32 +1,30 @@
 import streamlit as st
 import base64
 
-# --- Must be the first Streamlit command ---
 st.set_page_config(
-    page_title="T.O.M.M.Y. OS",
+    page_title="T.O.M.M.Y. OS Project Showcase",
     page_icon="👁️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
-# --- CSS Styling for that "Developer Log / Hacking" aesthetic ---
+# --- CSS Styling ---
 st.markdown("""
     <style>
         .stApp {
             background-color: #0E1117;
             color: #C9D1D9;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             color: #58A6FF;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-weight: 800;
         }
         .highlight-box {
             background-color: #161B22;
             border-left: 4px solid #58A6FF;
             padding: 1.5rem;
-            border-radius: 4px;
+            border-radius: 6px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
@@ -34,76 +32,153 @@ st.markdown("""
             background-color: #2D1115;
             border-left: 4px solid #F85149;
             padding: 1.5rem;
-            border-radius: 4px;
+            border-radius: 6px;
             color: #FF7B72;
             margin-bottom: 2rem;
-            font-family: 'Segoe UI', sans-serif;
+        }
+        .team-box {
+            background-color: #1a1e24;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #30363d;
+        }
+        .team-name {
+            color: #58A6FF;
+            font-size: 1.1rem;
+            font-weight: bold;
         }
     </style>
 """, unsafe_allow_html=True)
 
+# --- SIDEBAR NAV ---
+with st.sidebar:
+    st.image("https://github.com/fluidicon.png", width=50) # Generic dark-mode icon setup
+    st.markdown("## Navigation")
+    st.markdown("- [Home](#t-o-m-m-y-os)")
+    st.markdown("- [Deployment Limitations](#warning-academic-architecture-notice)")
+    st.markdown("- [Live System Demo](#-interactive-system-demonstration)")
+    st.markdown("- [Architecture Deep Dive](#-core-engineering-achievements)")
+    st.markdown("- [The Engineering Team](#-the-engineering-team)")
+
 # --- HERO SECTION ---
-st.title("T.O.M.M.Y.")
+st.title("T.O.M.M.Y. OS")
 st.markdown("### A Multi-Process Architecture for Hands-Free Windows Navigation Without Cloud Dependencies")
 
 st.markdown("""
 <div class="warning-box">
-    <strong>⚠️ ACADEMIC ARCHITECTURE NOTICE: WHY THIS IS NOT A "WEB APP"</strong><br><br>
-    Most Python projects deployed to Streamlit or HuggingFace revolve around Data Science or Web APIs. 
-    T.O.M.M.Y is vastly different: It is a <em>monolithic Operating System Kernel wrapper</em>. <br><br>
-    It is explicitly engineered to bypass the mouse, adjust literal hardware settings (Volume/Brightness), and directly control active local GUI window states using local Webcams and Microphones. 
-    Because Streamlit Cloud operates inside remote, headless Linux containers without physical monitor displays, webcams, or speakers, <strong>T.O.M.M.Y. cannot mathematically run "in the cloud"</strong>. <br><br>
-    To evaluate this project, you <strong>must</strong> clone the GitHub repository and execute it natively on a local Windows machine. 
+    <strong>⚠️ ACADEMIC ARCHITECTURE NOTICE: CLOUD DEPLOYMENT LIMITATIONS</strong><br><br>
+    Most standard Python projects deployed to the cloud are web apps or data parsers. T.O.M.M.Y is drastically different: It is a <em>monolithic Operating System Kernel wrapper</em> designed natively for local Windows execution.<br><br>
+    The script explicitly bypasses the standard mouse, alters hardware constraints (like screen brightness), and analyzes active GUI windows utilizing a localized USB Webcam and Microphone. Because Streamlit Cloud runs inside headless Linux Docker containers that completely lack physical screens, hardware microphones, and speakers, <strong>the actual OS engine cannot be live-executed from this server</strong>. <br><br>
+    This website serves as our Comprehensive Project Portfolio. To physically test the OS, the source code must be compiled natively on a local Windows machine.
 </div>
 """, unsafe_allow_html=True)
 
-# --- GITHUB CLONE SECTION ---
-st.markdown("## 📥 Core Source Code (Evaluate Here)")
+# --- GITHUB URL ENTRY ---
+st.markdown("## 📥 Source Code Registry")
+st.markdown("To evaluate this project locally, execute the following within a Windows environment:")
 st.code("git clone https://github.com/chiragphogat/tommy-os.git\ncd tommy-os\nsetup.bat", language="bash")
-st.markdown("[🔗 **Open Full GitHub Repository**](https://github.com/chiragphogat/tommy-os)")
+st.markdown("""[🚀 **Launch Full GitHub Repository Here**](https://github.com/chiragphogat/tommy-os)""")
 
-# --- ABSTRACT SECTION ---
-st.markdown("---")
-st.markdown("## 📄 Research Abstract")
+st.divider()
+
+# --- DEMO TERMINAL SECTION ---
+st.markdown("## 🎮 Interactive System Demonstration")
+st.markdown("Because we cannot hook directly into your local webcam from this web server, here is a simulated representation of the T.O.M.M.Y. Terminal Interface processing live commands.")
+
+demo_expander = st.expander("▶️ Watch Live Console Execution", expanded=True)
+with demo_expander:
+    st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ") # PLACEHOLDER
+    st.caption("*(Note: Replace the URL array above in `app.py` with your literal recorded Demo YouTube video!)*")
+    
+    st.markdown("**Simulated Local Logging Engine:**")
+    st.code("""
+============================================================
+ 🧠 BOOTING T.O.M.M.Y. OS MASTER KERNEL V3.2 (Monolithic) 🧠
+============================================================
+[OS] IPC Subprocess Bridge Initialized (Hand Tracking Default)
+[OS] Allocating Engine 1: Auditory Intelligence & UI HUD...
+[OS] Allocating Engine 2: Spatial Mathematics (CV2)...
+
+✅ [OS_SYS] All Neural Pipelines Active.
+
+[CAMERA] Vision Kernel online. Tracking 21 Geometric point targets.
+[MIC] PvRecorder hardware locked. Ambient Room scanning initiated...
+[HOTWORD] 'Hey Tommy' detected natively.
+[MIC OS DRIVER YIELDED] Shutting down background arrays...
+[LISTENING] Speak now...
+   ↳ [HEARD]: "Turn off the brightness and open youtube"
+[MIC OS DRIVER ACQUIRED] Restarting PvRecorder...
+
+>> EXECUTING HARDWARE LOGIC -> Dimmimg SBC Drivers to 0%...
+>> EXECUTING OS LOGIC -> Executing browser automation for: YouTube...
+    """, language="markdown")
+
+st.divider()
+
+# --- ARCHITECTURE SECTION ---
+st.markdown("## 🧠 Core Engineering Achievements")
 
 st.markdown("""
 <div class="highlight-box">
-Traditional Human-Computer Interaction (HCI) is predominantly anchored to physical peripherals (keyboards, mice), inherently restricting operational mobility and accessibility. While modern Voice Assistants mitigate interaction friction, they rely heavily on cloud-hosted Large Language Models (LLMs), subjecting basic local OS execution to network latency and privacy degradation.<br><br>
-This project introduces <strong>T.O.M.M.Y.</strong>, a localized, multi-process architecture engineered natively for Windows to achieve total, hands-free hardware manipulation. The architecture bifurcates environmental processing into two concurrent engines:
-<ul>
-    <li><strong>The Vision Engine:</strong> A geometrical spatial tracker executing Y-axis coordinate mathematics on human digits to emulate cursor manipulation, screen scrolling, and hardware dimming.</li>
-    <li><strong>The Voice Engine:</strong> A zero-latency verbal parser that interfaces directly with Windows OS drivers, fortified with dynamic microphone-yielding locks to prevent IO deadlocks.</li>
-</ul>
-Crucially, T.O.M.M.Y. decouples OS control from neural processing. Standard commands execute natively via low-level Python scripts in ~18ms. Only highly context-dependent tasks—such as UI Vision parsing or web summarization—dispatch parallel requests to localized 4-bit neural payloads (Ollama/Moondream), proving that heavy localized HCI can function robustly without external cloud compute.
+Our research completely tears down traditional Human-Computer Interaction (HCI). While modern Voice Assistants exist, they rely heavily on cloud-hosted Large Language Models (LLMs), subjecting local OS execution to tremendous network latency. We successfully decoupled OS control from heavy neural processing. Standard commands execute natively using local geometry loops in under 20ms, proving that intensive visual and audial computing can function flawlessly on lightweight Windows hardware without cloud reliance.
 </div>
 """, unsafe_allow_html=True)
 
-# --- TECHNICAL INNOVATIONS ---
-st.markdown("---")
-st.markdown("## 🧠 Core Engineering Achievements")
-
 col1, col2 = st.columns(2)
-
 with col1:
-    st.markdown("### 1. The Y-Axis Spatial Fix")
+    st.markdown("### 1. Y-Axis Spatial Mathematics")
     st.markdown("""
-    Standard OpenCV hand tracking uses Euclidean bounding boxes on pixel distances to detect closed fists or bent fingers. This inherently failed when users physically leaned back in their chairs (the hand shrinks on camera).
-    T.O.M.M.Y utilizes sheer **Y-axis delta-math**, checking only if the absolute vertical coordinate of the fingertip sits natively *below* the vertical coordinate of the primary knuckle. It perfectly solves distance scaling.
+    Standard OpenCV hand tracking uses Euclidean bounding distance boxes (measuring pixels between fingers). This inherently shatters when a user leans back in their chair, as the camera scale shrinks.
+    T.O.M.M.Y bypasses this by utilizing pure **Y-axis delta-coordinate math**. It strictly measures if a fingertip is mathematically positioned *below* the physical plane of a knuckle (`tip.y > pip.y`), rendering the tracking immune to physical depth scaling.
+    """)
+    st.markdown("### 3. Asymmetric Neural Invocation")
+    st.markdown("""
+    The system isolates basic tasks (like Volume adjustment and UI clicks) into raw Python OS routines that fire instantly. We only trigger massive LLMs (`llama3` and `moondream` using Ollama) when complex context is required, such as commanding the assistant to "Read my screen".
     """)
 
 with col2:
-    st.markdown("### 2. Audio Deadlock Prevention")
+    st.markdown("### 2. Hardware Driver Lock Patches")
     st.markdown("""
-    Windows restricts the microphone driver to a single listening process. In dual-listener systems (A Wake-Word listener actively hunting for "Hey Tommy" alongside a Command Listener), traditional multi-threading causes catastrophic driver crashing.
-    We engineered aggressive `recorder.stop()` pipeline hooks immediately upon wake-word detection, instantly yielding the hardware layer to the Command Listener without crashing.
+    Windows OS inherently restricts active microphone arrays to a single port process. Attempting to run a Wake-Word listener (`pvporcupine`) alongside a Command Listener (`speech_recognition`) caused immediate Thread crashing.
+    We engineered an aggressive, dynamic `recorder.stop()` injection protocol. The exact millisecond the wake word is detected, the audio array is forcefully yielded, instantly unlocking the hardware port for the Command Engine without memory leaking.
+    """)
+    st.markdown("### 4. IPC State Bridging")
+    st.markdown("""
+    Because multi-threading a GPU vision process alongside a vocal LLM triggers the Global Interpreter Lock (GIL) and crashes Python, we bifurcated the architecture into dual subprocesses that communicate via a localized `.tommy_state.json` bridge pipeline.
     """)
 
-st.markdown("---")
-st.markdown("## 🖥️ System Requirements")
-st.markdown("""
-- **OS:** Windows 10/11
-- **Brain:** Local installation of Ollama (`llama3:8b` & `moondream`)
-- **IO:** Standard USB Webcam & Microphone
-""")
+st.divider()
 
-st.info("Project engineered by Chirag Phogat. Deployed solely as an Architectural Summary for Evaluation.")
+# --- TEAM COMPOSITION ---
+st.markdown("## 🤝 The Engineering Team")
+st.markdown("T.O.M.M.Y. was heavily developed and architected in conjunction by the following core members from the Department of Computer Science at Lovely Professional University:")
+
+t1, t2, t3 = st.columns(3)
+
+with t1:
+    st.markdown("""
+    <div class="team-box">
+        <div class="team-name">Chirag Phogat</div>
+        <p style="color:#8b949e; font-size: 0.9rem;">Lead Systems Architecture</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with t2:
+    st.markdown("""
+    <div class="team-box">
+        <div class="team-name">Chava Harshavardhan</div>
+        <p style="color:#8b949e; font-size: 0.9rem;">Core Engineering & Integration</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with t3:
+    st.markdown("""
+    <div class="team-box">
+        <div class="team-name">Lalmalsawm Guite</div>
+        <p style="color:#8b949e; font-size: 0.9rem;">Operations & OS Pipeline Optimization</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.caption("Powered by Streamlit | Engineered strictly for Offline Deployment.")
