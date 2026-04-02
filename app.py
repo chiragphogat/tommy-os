@@ -62,19 +62,23 @@ with tab1:
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         with st.container(border=True):
-            st.image("assets/chirag.jpeg", use_column_width=True)
+            try: st.image("assets/chirag.jpeg", use_column_width=True)
+            except: st.warning("Missing Photo")
             st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Chirag Phogat</h3><p style='color:#8b949e; text-align:center;'>Lead Systems Architecture</p>", unsafe_allow_html=True)
     with col2:
         with st.container(border=True):
-            st.image("assets/chava.jpeg", use_column_width=True)
+            try: st.image("assets/chava.jpeg", use_column_width=True)
+            except: st.warning("Missing Photo")
             st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Chava Harshavardhan</h3><p style='color:#8b949e; text-align:center;'>Gaze Estimation</p>", unsafe_allow_html=True)
     with col3:
         with st.container(border=True):
-            st.image("assets/lalmalsawm.jpeg", use_column_width=True)
+            try: st.image("assets/lalmalsawm.jpeg", use_column_width=True)
+            except: st.warning("Missing Photo")
             st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Lalmalsawm Guite</h3><p style='color:#8b949e; text-align:center;'>Lead Researcher</p>", unsafe_allow_html=True)
     with col4:
         with st.container(border=True):
-            st.image("assets/kaushal.jpeg", use_column_width=True)
+            try: st.image("assets/kaushal.jpeg", use_column_width=True)
+            except: st.warning("Missing Photo")
             st.markdown("<h3 style='margin-bottom:0; text-align:center;'>Kaushal Pathak</h3><p style='color:#8b949e; text-align:center;'>Project Guide & Mentor</p>", unsafe_allow_html=True)
 
 
