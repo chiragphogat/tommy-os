@@ -1,4 +1,6 @@
 import streamlit as st
+import base64
+import graphviz
 
 st.set_page_config(
     page_title="T.O.M.M.Y. OS",
@@ -213,24 +215,22 @@ with tab3:
     st.markdown("### III. The Core Architecture and IPC Linking")
     st.markdown("The biggest wall we slammed into was stopping all these different modules from fighting over the CPU. Trying to cram the camera feed, the speech engine, and the Tkinter overlay into a single script was a disaster. So, we ripped the whole thing apart into separate, disconnected pieces.")
 
-    st.markdown("""
-    ```mermaid
-    graph TD
-        User --> C(Webcam Input)
-        User --> M(Microphone Input)
-        C --> GD(Gesture Detection)
-        GD --> GE(Gaze Estimation)
-        GE --> GC(Gesture Classifier)
-        M --> SR(Speech Recognition)
-        SR --> WW(Wake Word Engine)
-        GC --> TP(Task Planner)
-        WW --> TP
-        LLM(LLM Brain) --> TP
-        TP --> MC(Multimodal Controller)
-        MC --> AK(Automation Kernel)
-        AK --> OS(OS Actions)
-    ```
-    """)
+    fig1 = graphviz.Digraph(node_attr={'shape': 'box', 'style': 'rounded'})
+    fig1.edge('User', 'Webcam Input')
+    fig1.edge('User', 'Microphone Input')
+    fig1.edge('Webcam Input', 'Gesture Detection')
+    fig1.edge('Gesture Detection', 'Gaze Estimation')
+    fig1.edge('Gaze Estimation', 'Gesture Classifier')
+    fig1.edge('Microphone Input', 'Speech Recognition')
+    fig1.edge('Speech Recognition', 'Wake Word Engine')
+    fig1.edge('Gesture Classifier', 'Task Planner')
+    fig1.edge('Wake Word Engine', 'Task Planner')
+    fig1.edge('LLM Brain', 'Task Planner')
+    fig1.edge('Task Planner', 'Multimodal Controller')
+    fig1.edge('Multimodal Controller', 'Automation Kernel')
+    fig1.edge('Automation Kernel', 'OS Actions')
+    st.graphviz_chart(fig1)
+    
     st.caption("**Fig 1.** The 12-Module Substructure we designed to keep the memory heaps fully separated.")
 
     st.markdown("""
@@ -240,25 +240,20 @@ with tab3:
     Our fix was to abandon threading completely. We built a master loader called `tommy_os.py` that uses the native `subprocess` library to launch the vision script on CPU Core 0 and the voice script on CPU Core 1 [17]. They do not share memory. To let them communicate, we built a tiny bridge file called `.tommy_state.json`. If the voice agent needs to mute the mic, it just flips a boolean inside that text file. Two milliseconds later, the vision script reads the file and updates the desktop UI without ever dropping a single camera frame [6].
     """)
 
-    st.markdown("""
-    ```mermaid
-    graph LR
-        U(User Entity) --> V(Auditory Channel)
-        U --> G(Spatial Input)
-        U --> E(Ocular Trace)
-        
-        V --> S(NLP Engine)
-        G --> H(MediaPipe Hand)
-        E --> I(FaceMesh Iris)
-        
-        S --> C[IPC Master Controller State - JSON]
-        H --> C
-        I --> C
-        
-        C --> A(Background WMI / PyAutoGUI)
-        A --> OS(Windows Host OS)
-    ```
-    """)
+    fig2 = graphviz.Digraph(node_attr={'shape': 'box', 'style': 'rounded'})
+    fig2.edge('User Entity', 'Auditory Channel')
+    fig2.edge('User Entity', 'Spatial Input')
+    fig2.edge('User Entity', 'Ocular Trace')
+    fig2.edge('Auditory Channel', 'NLP Engine')
+    fig2.edge('Spatial Input', 'MediaPipe Hand')
+    fig2.edge('Ocular Trace', 'FaceMesh Iris')
+    fig2.edge('NLP Engine', 'IPC Master Controller State (`.json`)')
+    fig2.edge('MediaPipe Hand', 'IPC Master Controller State (`.json`)')
+    fig2.edge('FaceMesh Iris', 'IPC Master Controller State (`.json`)')
+    fig2.edge('IPC Master Controller State (`.json`)', 'Background WMI / PyAutoGUI')
+    fig2.edge('Background WMI / PyAutoGUI', 'Windows Host OS')
+    st.graphviz_chart(fig2)
+    
     st.caption("**Fig 2.** The parallel IPC pipeline. Structuring it this way permanently eradicated camera frame drops during heavy NLP computation.")
 
     st.markdown("---")
@@ -412,15 +407,16 @@ with tab3:
 
     A completely invisible backend OS loop cannot read a conversational paragraph. It needs strict programmatic arrays. To forcefully shut the AI up, we basically hijacked the core System Prompt, threatening the model to never use conversational english and legally binding it to only ever reply using raw JSON objects.
     """)
-    st.markdown("""
-    ```mermaid
-    graph LR
-        1[1: Idle Buffering <br>Porcupine Array] -->|Wake Word| 2[2: Mic Recording <br>SpeechRecognition]
-        2 -->|Raw Audio String| 3[3: Syntactic Search <br>Llama-3 LLM]
-        3 -->|JSON Output| 4[4: Hook Injection <br>os.system]
-        4 -->|Flush Cache| 1
-    ```
-    """)
+    
+    fig6 = graphviz.Digraph(node_attr={'shape': 'box', 'style': 'rounded'})
+    fig6.attr(rankdir='LR')
+    fig6.attr('edge', fontsize='10')
+    fig6.edge('1: Idle Buffering\n(Porcupine Array)', '2: Mic Recording\n(SpeechRecognition)', label='Wake Word')
+    fig6.edge('2: Mic Recording\n(SpeechRecognition)', '3: Syntactic Search\n(Llama-3 LLM)', label='Raw Audio String')
+    fig6.edge('3: Syntactic Search\n(Llama-3 LLM)', '4: Hook Injection\n(os.system)', label='JSON Output')
+    fig6.edge('4: Hook Injection\n(os.system)', '1: Idle Buffering\n(Porcupine Array)', label='Flush Cache')
+    st.graphviz_chart(fig6)
+    
     st.caption("**Fig 6.** The infinite recursion loop making up the Voice Engine state machine. This architecture ensures zero overlapping acoustic feedback interrupts.")
 
     st.markdown("""
