@@ -1,3 +1,4 @@
+
 # voice_engine.py
 import os
 import time
@@ -402,10 +403,10 @@ def execute_logic_chain(full_command):
             speak("Let me look at your screen.")
             
             try:
-                from src.rag_vision import trigger_visual_rag
+                from rag_vision import trigger_visual_rag
                 answer = trigger_visual_rag(query)
-            except ImportError:
-                answer = "Vision module Offline. Could not link RAG logic."
+            except ImportError as e:
+                answer = f"Vision module Offline. Could not link RAG logic. {e}"
                 
             speak(answer)
             results.append("Vision Analyzed")
