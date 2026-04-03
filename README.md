@@ -1,7 +1,7 @@
 # T.O.M.M.Y. OS 👁️🧠
 **The Fully Hands-Free, Vision & Voice Operations Kernel for Windows.**
 
-> 🌍 **[CLICK HERE TO VIEW OUR LIVE STREAMLIT PORTFOLIO](https://tommy-os.streamlit.app)**  
+> 🌍 **[CLICK HERE TO VIEW OUR LIVE STREAMLIT PORTFOLIO](https://tommy-os-sye8ypzv6r4u8ufd7o8uv3.streamlit.app/)**  
 > *Read the official IEEE architectural paper, view the 21-point geometric framework, and analyze the offline latency bounds on our cloud platform!*
 
 I was sick of computers keeping us artificially tethered to our desks. Voice assistants are cool, but if you ask a commercial AI to "drag and drop" a file on your Windows desktop, it crashes helplessly. 
