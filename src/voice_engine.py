@@ -185,7 +185,7 @@ def ask_local_vision(query, image_path):
             
         tags_response = requests.get("http://localhost:11434/api/tags", timeout=5)
         models = [m['name'] for m in tags_response.json().get('models', [])]
-        chosen_model = "moondream:latest" if any("moondream" in m for m in models) else (models[0] if models else "llava:latest")
+        chosen_model = "qwen3-vl:4b" if any("moondream" in m for m in models) else (models[0] if models else "llava:latest")
 
         url = "http://localhost:11434/api/generate"
         data = {
@@ -206,7 +206,7 @@ def ask_local_brain(query):
         models = [m['name'] for m in tags_response.json().get('models', [])]
         
         # Fallback to moondream if available, otherwise just pick the first one
-        chosen_model = "moondream:latest" if any("moondream" in m for m in models) else (models[0] if models else "llama3:8b-instruct-q4_K_M")
+        chosen_model = "moondream:latest" if any("moondream" in m for m in models) else (models[0] if models else "deepseek-r1:8b")
 
         url = "http://localhost:11434/api/generate"
         data = {"model": chosen_model, "prompt": f"You are part of an OS kernel. Keep it brief: {query}", "stream": False}
@@ -222,8 +222,7 @@ def adjust_volume(direction):
         import comtypes
         comtypes.CoInitialize()
         devices = AudioUtilities.GetSpeakers()
-        interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-        volume = cast(interface, POINTER(IAudioEndpointVolume))
+        volume = devices.EndpointVolume
         current = volume.GetMasterVolumeLevelScalar()
         change = 0.15 if direction == "up" else -0.15
         volume.SetMasterVolumeLevelScalar(max(0.0, min(1.0, current + change)), None)
@@ -263,6 +262,15 @@ def execute_logic_chain(full_command):
         
         global CURRENT_VOICE_MODE
         
+        # --- PHASE 15: DYNAMIC WAKE WORDS ---
+        if cmd.startswith("change model name to "):
+            new_name = cmd.replace("change model name to ", "").strip()
+            if new_name:
+                store_memory("dynamic_wake_word", new_name)
+                results.append(f"Model Name changed to {new_name}")
+                speak(f"Configured. I will now respond to the wake word {new_name}.")
+            continue
+            
         # --- PHASE 10: CONTEXTUAL VOICE MODES & VISION TOGGLES ---
         if cmd in ["activate study mode", "study mode", "switch to study mode"]:
             with state_lock: CURRENT_VOICE_MODE = "study"
@@ -273,6 +281,11 @@ def execute_logic_chain(full_command):
             with state_lock: CURRENT_VOICE_MODE = "movie"
             speak("Movie mode active. I will bypass wake-words and listen for media controls natively.")
             results.append("Movie Mode On")
+            continue
+        elif cmd in ["activate superpower mode", "superpower mode", "switch to superpower mode"]:
+            with state_lock: CURRENT_VOICE_MODE = "superpower"
+            speak("Superpower mode active. Absolute raw listening initialized. Blind accessibility unthrottled.")
+            results.append("Superpower Mode On")
             continue
         elif any(w in cmd for w in ["normal mode", "deactivate study mode", "deactivate movie mode", "exit mode", "quit mode"]):
             with state_lock: CURRENT_VOICE_MODE = "normal"
@@ -394,6 +407,16 @@ def execute_logic_chain(full_command):
             results.append("Intel Injected")
             continue
 
+        elif cmd.startswith("ask "):
+            query = cmd.replace("ask ", "", 1).strip()
+            results.append("Asking Brain...")
+            speak(f"Let me think about {query}.")
+            def ask_task():
+                answer = ask_local_brain(query)
+                speak(answer)
+            threading.Thread(target=ask_task, daemon=True).start()
+            continue
+
         # --- VISION CONTEXT (Phase 4) ---
         elif cmd.startswith("look") or "on my screen" in cmd or "read" in cmd:
             query = cmd.replace("look", "", 1).strip()
@@ -480,7 +503,7 @@ def execute_logic_chain(full_command):
                     filename = f"Research_{topic.replace(' ', '_')}.md"
                     with open(os.path.join(desk, filename), "w", encoding="utf-8") as f:
                         f.write(f"# Research Report: {topic}\n\n{report}")
-                    speak(f"Your research report on {topic} is ready on the desktop.")
+                    speak(f"Your research report on {topic} is ready. Here is a summary: {report}")
                 except Exception as e:
                     speak(f"Research failed.")
                     print(f"Research Error: {e}")
@@ -756,8 +779,7 @@ def _get_system_volume():
     """Returns the pycaw IAudioEndpointVolume interface for system audio."""
     comtypes.CoInitialize()
     devices = AudioUtilities.GetSpeakers()
-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-    return cast(interface, POINTER(IAudioEndpointVolume))
+    return devices.EndpointVolume
 
 def set_system_mute(mute: bool):
     """Deterministically mute (True) or unmute (False) system audio via pycaw."""
@@ -769,8 +791,18 @@ def set_system_mute(mute: bool):
 
 # --- 🎤 THE OMNI-EAR (SENSITIVE MODE) ---
 def run_tommy(queue=None):
-    porcupine = pvporcupine.create(access_key=ACCESS_KEY, keyword_paths=[WAKE_WORD_PATH], sensitivities=[0.99])
-    recorder = PvRecorder(device_index=-1, frame_length=porcupine.frame_length)
+    global CURRENT_VOICE_MODE
+    try:
+        porcupine = pvporcupine.create(access_key=ACCESS_KEY, keyword_paths=[WAKE_WORD_PATH], sensitivities=[0.99])
+        recorder = PvRecorder(device_index=-1, frame_length=porcupine.frame_length)
+    except Exception as e:
+        print(f"\n[🚫 PICOVOICE ERROR] Wake-word initialization failed: {e}")
+        print("[ℹ️] Switching to NORMAL AMBIENT MODE (continuous listening) as fallback.")
+        with state_lock:
+            CURRENT_VOICE_MODE = "normal_ambient"
+        porcupine = None
+        recorder = None
+
     r = sr.Recognizer()
 
     # ── Listening Calibration (Phase 1 Fix) ──────────────────────
@@ -804,7 +836,8 @@ def run_tommy(queue=None):
         print(f"[CALIBRATION SKIPPED] {e}  — using default {r.energy_threshold}")
 
     speak("Tommy systems online. I am ready, Architect.")
-    recorder.start()
+    if recorder:
+        recorder.start()
 
     try:
         while True:
@@ -812,6 +845,13 @@ def run_tommy(queue=None):
                 current_mode = CURRENT_VOICE_MODE
                 
             if current_mode == "normal":
+                if porcupine is None or recorder is None:
+                    print("\r[WAKE-WORD ERROR] API key limit. Forcing Ambient Normal mode.", end="", flush=True)
+                    with state_lock:
+                        CURRENT_VOICE_MODE = "normal_ambient"
+                    time.sleep(1)
+                    continue
+
                 # Ensure the background recorder is actually running!
                 if not recorder.is_recording:
                     recorder.start()
@@ -881,14 +921,14 @@ def run_tommy(queue=None):
                                     break
                     finally:
                         print("   [MIC OS DRIVER ACQUIRED] Restarting PvRecorder...")
-                        recorder.start()
+                        if recorder: recorder.start()
                                 
             # Phase 10 & 12: Free-Voice Native Modes (Including Blind Accessibility)
-            elif current_mode in ["study", "movie", "superpower"]:
+            elif current_mode in ["study", "movie", "superpower", "normal_ambient"]:
                 if voice_ui: voice_ui.set_color("green")
                 
                 # Absolutely kill the PvRecorder so it doesn't fight the OS lock
-                if recorder.is_recording:
+                if recorder and recorder.is_recording:
                     recorder.stop()
                 
                 try:
@@ -901,10 +941,34 @@ def run_tommy(queue=None):
                             
                             # Process contextual commands without Wake Word
                             valid_command = None
+                            
+                            # --- Dynamic Wake Word Extraction ---
+                            dyn_name = recall_memory("dynamic_wake_word")
+                            wake_words = ["hey tommy", "tommy", "hey johnny", "hey dummy"]
+                            if dyn_name:
+                                wake_words.append(dyn_name.lower())
+                                wake_words.append("hey " + dyn_name.lower())
+                                
+                            has_wake_word = False
+                            extracted_cmd = command
+                            for w in wake_words:
+                                if command.startswith(w):
+                                    has_wake_word = True
+                                    extracted_cmd = command[len(w):].strip()
+                                    break
+                                    
                             if "normal mode" in command or "exit mode" in command:
                                 valid_command = "switch to normal mode"
+                            elif current_mode == "normal_ambient":
+                                # Enforce strict Wake-Word checks on the ambient payload!
+                                if has_wake_word and extracted_cmd:
+                                    valid_command = extracted_cmd
+                                else:
+                                    valid_command = None
                             elif current_mode == "superpower":
-                                valid_command = command  # Blind Operators can execute ANY command without filtering
+                                # Superpower is for BLIND operators. It executes every word unconditionally!
+                                # Only fires when literally activated via voice command.
+                                valid_command = extracted_cmd if has_wake_word else command
                             elif current_mode == "study":
                                 if any(w in command for w in ["scroll down", "scroll up", "bright", "dark", "volume"]):
                                     valid_command = command
@@ -931,9 +995,14 @@ def run_tommy(queue=None):
         pass
     finally:
         set_system_mute(False)   # always leave audio unmuted on exit
-        recorder.stop()
-        porcupine.delete()
-        recorder.delete()
+        if recorder:
+            try: recorder.stop()
+            except: pass
+            try: recorder.delete()
+            except: pass
+        if porcupine:
+            try: porcupine.delete()
+            except: pass
 
 if __name__ == "__main__":
     # Force Python Dictation seamlessly into the background!

@@ -25,8 +25,8 @@ face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True, min_detection_confidenc
 # --- ⚙️ EYE TRACKING CONFIG ---
 EAR_THRESHOLD = 0.18         
 WINK_THRESHOLD = 0.22        
-MOUTH_AR_THRESHOLD = 0.45    
-DOUBLE_BLINK_TIME = 0.4      
+MOUTH_AR_THRESHOLD = 0.28    
+DOUBLE_BLINK_TIME = 0.60      
 WINK_HOLD_TIME = 0.15        
 GESTURE_COOLDOWN = 0.4       
 SCROLL_COOLDOWN = 0.1        
@@ -95,7 +95,7 @@ def run_vision_engine():
     plocX, plocY = 0, 0
     clocX, clocY = 0, 0
     ema_x, ema_y = 0, 0
-    alpha = 0.55 # Phase 24: Doubled Cursor Velocity (Lighting Fast smoothing)
+    alpha = 0.20 # Phase 24: Enhanced Cursor Velocity smoothing factor
     previous_pinch, previous_right_pinch = False, False
     dragging, swiping = False, False
     last_y, last_x = 0, 0
@@ -108,6 +108,7 @@ def run_vision_engine():
     left_EAR, right_EAR, mouth_MAR = 0.30, 0.30, 0.0
     blink_count = 0
     eyes_closed = False
+    eyes_closed_time = 0.0
     last_blink_time, last_gesture_time, last_scroll_time = 0.0, 0.0, 0.0
     left_wink_time, right_wink_time = 0.0, 0.0
     left_winking, right_winking = False, False
@@ -194,8 +195,14 @@ def run_vision_engine():
                     cv2.rectangle(img, (box_margin, box_margin), (cam_w-box_margin, cam_h-box_margin), (255, 255, 255), 1)
                     mapped_x = np.interp(index_x, (box_margin, cam_w-box_margin), (0, screen_w))
                     mapped_y = np.interp(index_y, (box_margin, cam_h-box_margin), (0, screen_h))
-                    if ema_x == 0 and ema_y == 0: ema_x, ema_y = mapped_x, mapped_y
-                    ema_x, ema_y = (alpha * mapped_x) + ((1 - alpha) * ema_x), (alpha * mapped_y) + ((1 - alpha) * ema_y)
+                    
+                    # PHASE 25: MAGNETIC CURSOR LOCK (Anti-Jitter)
+                    # When the thumb pulls inward to click, it inherently twitches the index finger mechanically.
+                    # We freeze the spatial matrix mathematically if the thumb breaks the 60px proximity barrier!
+                    if dist_index < 60 and not is_fist:
+                        pass # Freeze coordinates so the click drops absolutely flawlessly dead-center.
+                    else:
+                        ema_x, ema_y = (alpha * mapped_x) + ((1 - alpha) * ema_x), (alpha * mapped_y) + ((1 - alpha) * ema_y)
                     
                     # Track relative movement distance unconditionally for Swiping Macros
                     clocX, clocY = ema_x, ema_y
@@ -296,6 +303,7 @@ def run_vision_engine():
                             hands_open_time = 0.0 # Reset Trigger Data
                             current_vision = "eye"
                             last_active_vision = "" # Defeat the cached state immediately to force UI Pop-up render
+                            last_hand_check_time = current_time + 3.0 # Give the user 3 seconds to lower their hands!
 
         # =========================================================
         # 2️⃣ EYE TRACKING SYSTEM (FaceMesh)
@@ -360,31 +368,36 @@ def run_vision_engine():
                         mouth_was_open = True
                 else: mouth_was_open = False
 
-                # WINK DETECTION (L/R Clicks)
-                is_left_wink = left_EAR < WINK_THRESHOLD and right_EAR > left_EAR + 0.05
-                is_right_wink = right_EAR < WINK_THRESHOLD and left_EAR > right_EAR + 0.05
+                # BLINKS, CLICKS, & SCROLLING
                 both_closed = left_EAR < EAR_THRESHOLD and right_EAR < EAR_THRESHOLD
-
-                if is_left_wink and not both_closed and not right_winking:
-                    if not left_winking: left_wink_time = current_time; left_winking = True
-                    elif current_time - left_wink_time > WINK_HOLD_TIME and current_time - last_gesture_time > GESTURE_COOLDOWN:
-                        pyautogui.click(); last_gesture_time = current_time; left_winking = False
-                else: left_winking = False
-
-                if is_right_wink and not both_closed and not left_winking:
-                    if not right_winking: right_wink_time = current_time; right_winking = True
-                    elif current_time - right_wink_time > WINK_HOLD_TIME and current_time - last_gesture_time > GESTURE_COOLDOWN:
-                        pyautogui.rightClick(); last_gesture_time = current_time; right_winking = False
-                else: right_winking = False
-
-                # BLINKS & SCROLLING
-                if both_closed and not eyes_closed and current_time - last_gesture_time > 0.1: eyes_closed = True
+                
+                if both_closed and not eyes_closed and current_time - last_gesture_time > 0.1: 
+                    eyes_closed = True
+                    eyes_closed_time = current_time
+                elif both_closed and eyes_closed:
+                    if current_time - eyes_closed_time > 2.0:
+                        print("\n[⚡ COMMAND DETECTED] Eyes closed intentionally. Routing OS Power to Hand Engine...")
+                        try:
+                            with open(STATE_FILE, "r") as f: state_data = json.load(f)
+                        except: state_data = {}
+                        state_data["vision_mode"] = "hand"
+                        with open(STATE_FILE, "w") as f: json.dump(state_data, f)
+                        current_vision = "hand"
+                        last_active_vision = ""
+                        eyes_closed_time = current_time # Reset to prevent spam
                 elif not both_closed and eyes_closed:
-                    blink_count = 1 if current_time - last_blink_time > DOUBLE_BLINK_TIME else int(blink_count) + 1
-                    last_blink_time, eyes_closed = current_time, False
-                    if blink_count == 1: pyautogui.click()
-                    elif blink_count == 2: pyautogui.doubleClick()
-                    elif blink_count >= 3: pyautogui.hotkey('win', 'printscreen'); blink_count = 0
+                    duration = current_time - eyes_closed_time
+                    eyes_closed = False
+                    
+                    if duration < 0.45: # FAST BLINK -> Left Clicks
+                        blink_count = 1 if current_time - last_blink_time > DOUBLE_BLINK_TIME else int(blink_count) + 1
+                        last_blink_time = current_time
+                        if blink_count == 1: pyautogui.click()
+                        elif blink_count == 2: pyautogui.doubleClick()
+                        elif blink_count >= 3: pyautogui.hotkey('win', 'printscreen'); blink_count = 0
+                    elif 0.45 <= duration < 2.0: # MEDIUM BLINK HOLD -> Right Click
+                        pyautogui.rightClick()
+                        
                     last_gesture_time = current_time
                 
                 if left_EAR > EAR_THRESHOLD and right_EAR > EAR_THRESHOLD and not eye_drag_mode:

@@ -41,11 +41,11 @@ def trigger_visual_rag(prompt="Describe exactly what is happening on this comput
         return "CRITICAL FAULT: Unable to grab visual desktop stream."
         
     print(f"[SYS] Captured Desktop RAM Buffer at {pyautogui.size()[0]}x{pyautogui.size()[1]} resolution.")
-    print(f"[SYS] Firing Multi-Modal Request to local Ollama [Model: moondream]...")
+    print(f"[SYS] Firing Multi-Modal Request to local Ollama [Model: qwen3-vl:4b]...")
     
     # Payload built for the local Ollama container
     payload = {
-        "model": "moondream",
+        "model": "qwen3-vl:4b",
         "prompt": prompt,
         "images": [b64_image],
         "stream": False

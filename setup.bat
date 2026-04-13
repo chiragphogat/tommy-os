@@ -57,9 +57,9 @@ IF %ERRORLEVEL% NEQ 0 goto INSTALL_OLLAMA
 :PULL_MODELS
 echo [INFO] Injecting Local AI Weights... Do NOT close this window.
 echo Pulling Primary Logic Core (llama3)...
-call ollama pull llama3:8b-instruct-q4_K_M
+call ollama pull deepseek-r1:8b
 echo Pulling Screen Vision Core (moondream)...
-call ollama pull moondream
+call ollama pull qwen3-vl:4b
 goto FINISH
 
 
