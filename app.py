@@ -27,7 +27,7 @@ st.markdown("""
 st.title("T.O.M.M.Y. OS")
 st.markdown("### A Multi-Process Architecture for Hands-Free Windows Navigation Without Cloud Dependencies")
 
-tab1, tab2, tab3 = st.tabs(["🚀 Project Synopsis", "📊 Comparative Analysis & Methodology", "📄 Digital Research Paper"])
+tab1, tab2, tab3, tab4 = st.tabs(["🚀 Project Synopsis", "📊 Comparative Analysis & Methodology", "📄 Digital Research Paper", "🖥️ Presentation Deck"])
 
 # =========================================================================
 # TAB 1: SYNOPSIS
@@ -559,3 +559,41 @@ ALGORITHM 1: How the IPC Cores Actually Talk to Each Other
     """)
 
     st.markdown("<br><hr><center><p style='color:#8b949e;'>Engineered for academic evaluation. Open-Sourced purely for Native Windows Frameworks.</p></center>", unsafe_allow_html=True)
+
+# =========================================================================
+# TAB 4: PRESENTATION DECK
+# =========================================================================
+with tab4:
+    st.markdown("## 🖥️ Live Presentation View")
+    st.markdown("Use the buttons below to navigate through the project presentation slides directly in your browser.")
+    
+    if "slide_idx" not in st.session_state:
+        st.session_state.slide_idx = 0
+        
+    try:
+        with open("presentation.md", "r", encoding="utf-8") as f:
+            content = f.read()
+            
+        raw_slides = [s.strip() for s in content.split("---") if s.strip()]
+        slides = [s for s in raw_slides if not (s.startswith("marp: true") or "theme: default" in s)]
+            
+        max_idx = len(slides) - 1
+        
+        col1, col2, col3 = st.columns([1, 10, 1])
+        with col1:
+            if st.button("⬅️ Prev", use_container_width=True) and st.session_state.slide_idx > 0:
+                st.session_state.slide_idx -= 1
+                st.rerun()
+        with col2:
+            st.markdown(f"<div style='text-align: center; color: #8b949e; padding-top: 10px;'>Slide {st.session_state.slide_idx + 1} of {len(slides)}</div>", unsafe_allow_html=True)
+        with col3:
+            if st.button("Next ➡️", use_container_width=True) and st.session_state.slide_idx < max_idx:
+                st.session_state.slide_idx += 1
+                st.rerun()
+                
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(f"<div class='paper-section' style='min-height: 500px; padding: 40px;'>\n\n{slides[st.session_state.slide_idx]}\n\n</div>", unsafe_allow_html=True)
+        st.markdown("<hr>", unsafe_allow_html=True)
+        
+    except Exception as e:
+        st.error(f"⚠️ Could not load presentation: {e}")
