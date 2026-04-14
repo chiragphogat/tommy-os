@@ -34,7 +34,7 @@ The ONLY time the massive LLM neural blocks fire up is if you explicitly command
 Double click `tommy_os.py` to boot up the dual-channel processor array.
 
 ### 🖖 The Spatial Hand Tracker 
-Just put your hands up! T.O.M.M.Y uses a dynamic bounding box and strict geometric Y-axis math to find you, even if you slouch.
+Just put your hands up! T.O.M.M.Y uses a dynamic bounding box and strict geometric Y-axis math to find you, even if you slouch. We've also heavily implemented a **Magnetic Cursor Lock** which mathematically freezes the cursor when your fingers pinch, instantly stopping organic hand jitter!
 
 - **Index Finger Only:** This acts as your magic wand and mouse cursor. 
 - **Pinch (Thumb + Index):** Left Click.
@@ -44,6 +44,12 @@ Just put your hands up! T.O.M.M.Y uses a dynamic bounding box and strict geometr
 - **Closed Fist:** Hold this to "Grab" and physically Drag-and-Drop files.
 - **Peace Sign (Two Fingers):** Scroll Engine. Move your fingers apart to scroll Up, smash them together to scroll Down!
 - ........and there are God-level hardware modes (Thumb/Shaka) for dragging physical brightness/volume dials natively without making UI clicks!
+
+### 👁️ The Advanced Ocular/Eye Engine
+Don't want to use your hands? We use Time-Gated Eye Aspect Ratio logic to track your blinking!
+- **Fast Blink (< 0.45s):** Left Clicks (or Double Clicks if fired twice).
+- **Medium Blink Hold (0.45s - 2.0s):** Right Click.
+- **Deep Squeeze Hold (> 2.0s):** Instantly shuts down the webcam Eye math and routes OS computing power back to Hand Tracking natively.
 
 ### 🗣️ The Voice Engine
 Say `"Hey Tommy"` loudly. When you hear "Yes?", give him an order. Don't worry if people are talking or vacuuming; we injected driver-yielding locks that perfectly manage the Windows microphone so it never goes deaf.
@@ -58,6 +64,9 @@ You can say arbitrary hard commands:
 Or you can use the Neural Hooks:
 - `"Look at my screen."` (Triggers `src/rag_vision.py` to quietly capture your Local Windows display and pipe the base64 screenshot into a localized Moondream GPU pipeline to syntactically "see" what you are working on!)
 - `"Research how to build a jetpack."` (Spawns background Python agents to scrape DuckDuckGo locally).
+
+> **Dynamic Wake Words:** You can also dynamically tell Tommy to respond to a new name purely via voice! Say: *"change model name to JARVIS"*. 
+> **Offline Fail-Safe:** If your free Picovoice token ever expires, the system dynamically catches the API error and automatically shifts into "Normal Ambient Mode", falling back natively onto your local microphone array.
 - `"Execute ipconfig"` (Spawns a shell agent to run the terminal and summarize the output for you).
 
 ### 🕶️ Environmental "God Modes" (No Wake Words!)

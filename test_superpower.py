@@ -25,7 +25,7 @@ sys.modules['pvrecorder'] = MagicMock()
 sys.modules['keyboard'] = MagicMock()
 
 # Append root to path so we can import src modules
-sys.path.append(os.path.abspath("C:\\tommyv"))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from src import voice_engine
 
