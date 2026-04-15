@@ -559,4 +559,3 @@ ALGORITHM 1: How the IPC Cores Actually Talk to Each Other
     """)
 
     st.markdown("<br><hr><center><p style='color:#8b949e;'>Engineered for academic evaluation. Open-Sourced purely for Native Windows Frameworks.</p></center>", unsafe_allow_html=True)
-

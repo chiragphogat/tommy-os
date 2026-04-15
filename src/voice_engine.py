@@ -20,6 +20,9 @@ sys.coinit_flags = 0 # Force COINIT_MULTITHREADED globally to prevent WinError -
 import threading
 import subprocess
 
+import spacy
+import json
+
 import tkinter as tk
 
 # --- 🔴🟢🟡 TKINTER OVERLAY ---
@@ -166,55 +169,11 @@ def find_and_click(name):
         
     return f"UI Interaction Failed completely for {name}"
 
-# --- 🧠 INTELLIGENCE ENGINE (WRITE & VISION) ---
-ocr_reader = None
-def get_ocr():
-    global ocr_reader
-    if ocr_reader is None:
-        import easyocr
-        import warnings
-        warnings.filterwarnings("ignore", category=UserWarning)
-        ocr_reader = easyocr.Reader(['en'], gpu=False, verbose=False)
-    return ocr_reader
-
-def ask_local_vision(query, image_path):
-    try:
-        import base64
-        with open(image_path, "rb") as img_file:
-            img_b64 = base64.b64encode(img_file.read()).decode('utf-8')
-            
-        tags_response = requests.get("http://localhost:11434/api/tags", timeout=5)
-        models = [m['name'] for m in tags_response.json().get('models', [])]
-        chosen_model = "moondream:latest" if any("moondream" in m for m in models) else (models[0] if models else "llava:latest")
-
-        url = "http://localhost:11434/api/generate"
-        data = {
-            "model": chosen_model, 
-            "prompt": f"You are an OS visual assistant. Keep your answer incredibly brief and direct: {query}",
-            "images": [img_b64],
-            "stream": False
-        }
-        res = requests.post(url, json=data, timeout=60)
-        return res.json().get('response', "I couldn't analyze the image.")
-    except Exception as e:
-        print(f"Vision Error: {e}")
-        return "Vision Offline. Please verify Ollama."
-def ask_local_brain(query):
-    try:
-        # Get available models to prevent "Model not found" errors
-        tags_response = requests.get("http://localhost:11434/api/tags", timeout=5)
-        models = [m['name'] for m in tags_response.json().get('models', [])]
-        
-        # Fallback to moondream if available, otherwise just pick the first one
-        chosen_model = "llama3:8b-instruct-q4_K_M" if any("llama3" in m for m in models) else (models[0] if models else "llama3:8b-instruct-q4_K_M")
-
-        url = "http://localhost:11434/api/generate"
-        data = {"model": chosen_model, "prompt": f"You are part of an OS kernel. Keep it brief: {query}", "stream": False}
-        response = requests.post(url, json=data, timeout=30)
-        return response.json().get('response', "I couldn't generate an answer.")
-    except Exception as e:
-        print(f"Ollama Error: {e}")
-        return "Brain Offline. Please verify Ollama."
+# --- 🧠 DETERMINISTIC NLP ENGINE ---
+try:
+    nlp = spacy.load("en_core_web_sm")
+except BaseException:
+    nlp = None
 
 # --- 🔊 HARDWARE KERNEL (+-15 UNITS) ---
 def adjust_volume(direction):
@@ -282,11 +241,7 @@ def execute_logic_chain(full_command):
             speak("Movie mode active. I will bypass wake-words and listen for media controls natively.")
             results.append("Movie Mode On")
             continue
-        elif cmd in ["activate superpower mode", "superpower mode", "switch to superpower mode"]:
-            with state_lock: CURRENT_VOICE_MODE = "superpower"
-            speak("Superpower mode active. Absolute raw listening initialized. Blind accessibility unthrottled.")
-            results.append("Superpower Mode On")
-            continue
+
         elif any(w in cmd for w in ["normal mode", "deactivate study mode", "deactivate movie mode", "exit mode", "quit mode"]):
             with state_lock: CURRENT_VOICE_MODE = "normal"
             speak("Normal mode active. I require the wake word 'Hey Tommy' to listen.")
@@ -318,62 +273,7 @@ def execute_logic_chain(full_command):
             except: pass
             continue
             
-        # --- PHASE 11/12: OMNI-SENSORY SUPERPOWER MODE (BLIND ACCESSIBILITY) ---
-        elif cmd in ["activate superpower mode", "superpower mode", "switch to superpower mode"]:
-            with state_lock: CURRENT_VOICE_MODE = "superpower"
-            speak("Superpower mode active. I am now your eyes. I am listening continuously.")
-            results.append("Superpower Mode On")
-            continue
-            
-        elif cmd in ["what's in front of me", "what is in front of me", "describe my room"]:
-            image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "assets", ".latest_realworld.jpg")
-            if os.path.exists(image_path):
-                results.append("Physical Scan")
-                speak("Scanning physical environment.")
-                desc = ask_local_vision("Describe exactly what is physically happening in this camera photo. Be extremely descriptive for a blind person. Read any text you see if relevant.", image_path)
-                speak(f"My physical sensors report: {desc}")
-            else:
-                speak("The vision engine camera is not active.")
-                results.append("Scan Failed")
-            continue
-            
-        elif cmd in ["read the screen", "read screen", "read text", "read the text on my screen"]:
-            results.append("Reading Screen")
-            speak("Scanning screen for text.")
-            import tempfile, uuid
-            shot_path = os.path.join(tempfile.gettempdir(), f"ocr_{uuid.uuid4().hex}.png")
-            with ui_lock: pyautogui.screenshot(shot_path)
-            
-            def ocr_task(path):
-                try:
-                    import easyocr
-                    reader = easyocr.Reader(['en'], gpu=False) # GPU False for stability
-                    text_blocks = reader.readtext(path, detail=0)
-                    if text_blocks:
-                        full_text = " ".join(text_blocks)
-                        speak(f"The screen says: {full_text}")
-                    else:
-                        speak("I do not see any readable text on the screen.")
-                except Exception as e:
-                    speak("OCR Engine offline.")
-                finally:
-                    try: os.remove(path)
-                    except: pass
-            threading.Thread(target=ocr_task, args=(shot_path,), daemon=True).start()
-            continue
-            
-        elif cmd in ["what window am i in", "where am i", "what application is this"]:
-            results.append("Window Context")
-            try:
-                import uiautomation as auto
-                fg = auto.GetForegroundControl()
-                if fg and getattr(fg, 'Name', None):
-                    speak(f"You are currently looking at {fg.Name}")
-                else:
-                    speak("I am having trouble determining the active window.")
-            except:
-                speak("Window automation offline.")
-            continue
+
 
         # --- MEDIA CONTROLS (Movie Mode Enhancements) ---
         if any(w in cmd for w in ["play video", "pause video", "play song", "pause song"]) or cmd in ["play", "pause"]:
@@ -389,51 +289,7 @@ def execute_logic_chain(full_command):
             results.append("Previous Track")
             continue
 
-        # --- NON-BLOCKING AI GENERATION (Phase 3 Fix) ---
-        if cmd.startswith("write"):
-            query = cmd.replace("write", "", 1).strip()
-            results.append("Thinking...")
-            speak("Let me think about that.")
-            answer = ask_local_brain(query)
-            with ui_lock:
-                try:
-                    # Windows pyautogui can sometimes crash on strange emoticons/unicode text
-                    # from Ollama. We sanitize it by writing only ASCII-printable text if needed,
-                    # but simple exception catching is better.
-                    pyautogui.write(answer, interval=0.01)
-                except Exception as write_err:
-                    print(f"❌ Could not strictly type AI format output: {write_err}")
-                    pass
-            results.append("Intel Injected")
-            continue
 
-        elif cmd.startswith("ask "):
-            query = cmd.replace("ask ", "", 1).strip()
-            results.append("Asking Brain...")
-            speak(f"Let me think about {query}.")
-            def ask_task():
-                answer = ask_local_brain(query)
-                speak(answer)
-            threading.Thread(target=ask_task, daemon=True).start()
-            continue
-
-        # --- VISION CONTEXT (Phase 4) ---
-        elif cmd.startswith("look") or "on my screen" in cmd or "read" in cmd:
-            query = cmd.replace("look", "", 1).strip()
-            if not query: query = "Describe exactly what is on my screen right now in a single concise sentence."
-            
-            results.append("Looking...")
-            speak("Let me look at your screen.")
-            
-            try:
-                from rag_vision import trigger_visual_rag
-                answer = trigger_visual_rag(query)
-            except ImportError as e:
-                answer = f"Vision module Offline. Could not link RAG logic. {e}"
-                
-            speak(answer)
-            results.append("Vision Analyzed")
-            continue
 
         # --- 🧠 PERSISTENT MEMORY ---
         elif cmd.startswith("remember that "):
@@ -460,82 +316,7 @@ def execute_logic_chain(full_command):
                 results.append("Memory not found")
             continue
 
-        # --- 👻 GHOST TERMINAL ---
-        elif cmd.startswith("run command ") or cmd.startswith("execute "):
-            shell_cmd = cmd.replace("run command ", "").replace("execute ", "").strip()
-            results.append(f"Running {shell_cmd}")
-            speak(f"Executing {shell_cmd} silently in the background.")
-            
-            def ghost_task():
-                import subprocess
-                try:
-                    res = subprocess.run(shell_cmd, shell=True, capture_output=True, text=True, timeout=20)
-                    output = res.stdout if res.stdout else res.stderr
-                    if not output: output = "Command executed with no output."
-                    summary = ask_local_brain(f"Summarize this terminal output in one short sentence: {output}")
-                    speak(f"Terminal reports: {summary}")
-                except Exception as e:
-                    speak(f"Command failed.")
-            threading.Thread(target=ghost_task, daemon=True).start()
-            continue
 
-        # --- 🕷️ DEEP RESEARCH SWARM ---
-        elif cmd.startswith("research "):
-            topic = cmd.replace("research ", "").strip()
-            results.append("Researching...")
-            speak(f"Deploying swarms to research {topic}.")
-            
-            def research_task():
-                try:
-                    import requests
-                    from bs4 import BeautifulSoup
-                    headers = {"User-Agent": "Mozilla/5.0"}
-                    search_url = f"https://html.duckduckgo.com/html/?q={topic.replace(' ', '+')}"
-                    res = requests.get(search_url, headers=headers, timeout=10)
-                    soup = BeautifulSoup(res.text, 'html.parser')
-                    
-                    snippets = [a.text for a in soup.find_all('a', class_='result__snippet', limit=3)]
-                    raw_context = "\n".join(snippets)
-                    if not raw_context: raw_context = "No results found."
-                    
-                    report = ask_local_brain(f"Write a comprehensive 2-paragraph research report on '{topic}' using this context:\n{raw_context}")
-                    desk = os.path.join(os.path.expanduser("~"), "Desktop")
-                    filename = f"Research_{topic.replace(' ', '_')}.md"
-                    with open(os.path.join(desk, filename), "w", encoding="utf-8") as f:
-                        f.write(f"# Research Report: {topic}\n\n{report}")
-                    speak(f"Your research report on {topic} is ready. Here is a summary: {report}")
-                except Exception as e:
-                    speak(f"Research failed.")
-                    print(f"Research Error: {e}")
-            threading.Thread(target=research_task, daemon=True).start()
-            continue
-
-        # --- 🛠️ SELF-HEALING AUTOPILOT ---
-        elif cmd.startswith("fix file "):
-            file_target = cmd.replace("fix file ", "").strip()
-            results.append(f"Autopilot fixing {file_target}")
-            speak(f"Initiating self-healing on {file_target}")
-            
-            def heal_task():
-                try:
-                    import glob
-                    found = False
-                    for py_file in glob.glob("**/*.py", recursive=True):
-                        if file_target.lower() in py_file.lower():
-                            with open(py_file, 'r', encoding='utf-8') as f: code = f.read()
-                            speak("Analyzing the code geometry now.")
-                            prompt = f"Fix any syntax or logic errors in this python code. ONLY return the raw python code, no markdown, no explanations:\n{code}"
-                            fixed_code = ask_local_brain(prompt)
-                            fixed_code = fixed_code.replace("```python", "").replace("```", "").strip()
-                            with open(py_file, 'w', encoding='utf-8') as f: f.write(fixed_code)
-                            speak(f"I have successfully rewritten and healed {py_file}.")
-                            found = True
-                            break
-                    if not found: speak(f"I could not locate a file named {file_target}.")
-                except Exception as e:
-                    speak("Self healing sequence failed.")
-            threading.Thread(target=heal_task, daemon=True).start()
-            continue
 
         # --- THREAD-SAFE UI & HARDWARE AUTOMATION ---
         with ui_lock:
@@ -756,21 +537,33 @@ def execute_logic_chain(full_command):
                 pyautogui.write(text, interval=0.01)
                 results.append("Text Typed")
             else:
-                # Fallback for complex queries or unstructured talking 
-                pass
+                # Fallback NLP using spaCy
+                if nlp:
+                    doc = nlp(cmd)
+                    # Basic intent extraction
+                    verbs = [token.lemma_ for token in doc if token.pos_ == "VERB"]
+                    nouns = [token.lemma_ for token in doc if token.pos_ == "NOUN"]
+                    results.append(f"Parsed Intent: Actions {verbs} on Targets {nouns}")
+                else:
+                    results.append("Command unhandled by strict logic")
 
     final_response = " and ".join(results)
     
-    # PHASE 12: BLIND CONFIRMATION OVERRIDE
-    if CURRENT_VOICE_MODE == "superpower" and final_response:
-        # We don't prepend "I have executed" for Screen Reads or Context where Tommy speaks a full sentence naturally.
-        if "My physical sensors report" not in final_response and "You are currently looking at" not in final_response and "The screen says" not in final_response:
-            final_response = f"I have executed: {final_response}"
-        clean_speech = final_response.replace("|", " and ")
-        speak(clean_speech)
+    # LOGGING AND CONFIRMATION
+    if final_response:
+        if CURRENT_VOICE_MODE == "normal_ambient":
+            clean_speech = final_response.replace("|", " and ")
+                
+            if len(clean_speech) > 250:
+                speak("I have executed the long command.")
+            else:
+                clean_speech = f"I have executed: {clean_speech}"
+                speak(clean_speech)
+            
         print(f"✅ [RESPONSE]: {final_response}\n")
     else:
         print("✅ [RESPONSE]: Empty/Unknown Command\n")
+        
     return final_response
 
 # --- 🔇 STATEFUL MUTE/UNMUTE (replaces fragile volumemute toggle) ---
@@ -840,6 +633,7 @@ def run_tommy(queue=None):
         recorder.start()
 
     try:
+        active_attention = False
         while True:
             with state_lock:
                 current_mode = CURRENT_VOICE_MODE
@@ -893,7 +687,11 @@ def run_tommy(queue=None):
                                     
                                     # Unmute immediately after capturing vocals
                                     set_system_mute(False)
-                                    command = r.recognize_google(audio)
+                                    res_str = r.recognize_vosk(audio)
+                                    try:
+                                        command = json.loads(res_str).get("text", "")
+                                    except BaseException:
+                                        command = ""
                                     
                                     # If the user accidentally says "Hey Tommy" again while the box is green, 
                                     # we ignore the duplicate and keep the mic explicitly open!
@@ -923,8 +721,8 @@ def run_tommy(queue=None):
                         print("   [MIC OS DRIVER ACQUIRED] Restarting PvRecorder...")
                         if recorder: recorder.start()
                                 
-            # Phase 10 & 12: Free-Voice Native Modes (Including Blind Accessibility)
-            elif current_mode in ["study", "movie", "superpower", "normal_ambient"]:
+            # Phase 10 & 12: Free-Voice Native Modes
+            elif current_mode in ["study", "movie", "normal_ambient"]:
                 if voice_ui: voice_ui.set_color("green")
                 
                 # Absolutely kill the PvRecorder so it doesn't fight the OS lock
@@ -936,7 +734,11 @@ def run_tommy(queue=None):
                         print(f"\r[FREE VOICE] Active Mode: [{current_mode.upper()}]  <-- Ambient Array Listening...", end="", flush=True)
                         try:
                             audio = r.listen(source, timeout=None, phrase_time_limit=15)
-                            command = r.recognize_google(audio).lower()
+                            res_str = r.recognize_vosk(audio)
+                            try:
+                                command = json.loads(res_str).get("text", "").lower()
+                            except BaseException:
+                                command = ""
                             print(f"\n   ↳ [AMBIENT CAUGHT]: \"{command}\"")
                             
                             # Process contextual commands without Wake Word
@@ -960,15 +762,10 @@ def run_tommy(queue=None):
                             if "normal mode" in command or "exit mode" in command:
                                 valid_command = "switch to normal mode"
                             elif current_mode == "normal_ambient":
-                                # Enforce strict Wake-Word checks on the ambient payload!
-                                if has_wake_word and extracted_cmd:
-                                    valid_command = extracted_cmd
-                                else:
-                                    valid_command = None
-                            elif current_mode == "superpower":
-                                # Superpower is for BLIND operators. It executes every word unconditionally!
-                                # Only fires when literally activated via voice command.
+                                # User requested removing Wake-Word constraints altogether.
+                                # Execute unconditionally. Strip the wake word ONLY if it is coincidentally present!
                                 valid_command = extracted_cmd if has_wake_word else command
+
                             elif current_mode == "study":
                                 if any(w in command for w in ["scroll down", "scroll up", "bright", "dark", "volume"]):
                                     valid_command = command

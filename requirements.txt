@@ -1,5 +1,5 @@
 opencv-python-headless>=4.8.0
-mediapipe>=0.10.9
+mediapipe==0.10.14
 PyAutoGUI>=0.9.54
 numpy>=1.24.3
 screen-brightness-control>=0.22.0
@@ -11,8 +11,8 @@ python-dotenv>=1.0.0
 pvrecorder>=1.2.1
 comtypes>=1.2.0
 pycaw>=20230407
-easyocr>=1.7.1
 psutil>=5.9.6
-beautifulsoup4>=4.12.2
 edge-tts>=6.1.9
 streamlit>=1.30.0
+spacy>=3.7.2
+vosk>=0.3.45

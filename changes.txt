@@ -1,0 +1,283 @@
+diff --git a/src/vision_engine.py b/src/vision_engine.py
+index 050cf9b2..3a16100a 100644
+--- a/src/vision_engine.py
++++ b/src/vision_engine.py
+@@ -26,6 +26,6 @@ face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True, min_detection_confidenc
+ EAR_THRESHOLD = 0.18         
+ WINK_THRESHOLD = 0.22        
+-MOUTH_AR_THRESHOLD = 0.45    
+-DOUBLE_BLINK_TIME = 0.4      
++MOUTH_AR_THRESHOLD = 0.28    
++DOUBLE_BLINK_TIME = 0.60      
+ WINK_HOLD_TIME = 0.15        
+ GESTURE_COOLDOWN = 0.4       
+@@ -96,5 +96,5 @@ def run_vision_engine():
+     clocX, clocY = 0, 0
+     ema_x, ema_y = 0, 0
+-    alpha = 0.55 # Phase 24: Doubled Cursor Velocity (Lighting Fast smoothing)
++    alpha = 0.20 # Phase 24: Enhanced Cursor Velocity smoothing factor
+     previous_pinch, previous_right_pinch = False, False
+     dragging, swiping = False, False
+@@ -109,4 +109,5 @@ def run_vision_engine():
+     blink_count = 0
+     eyes_closed = False
++    eyes_closed_time = 0.0
+     last_blink_time, last_gesture_time, last_scroll_time = 0.0, 0.0, 0.0
+     left_wink_time, right_wink_time = 0.0, 0.0
+@@ -195,6 +196,12 @@ def run_vision_engine():
+                     mapped_x = np.interp(index_x, (box_margin, cam_w-box_margin), (0, screen_w))
+                     mapped_y = np.interp(index_y, (box_margin, cam_h-box_margin), (0, screen_h))
+-                    if ema_x == 0 and ema_y == 0: ema_x, ema_y = mapped_x, mapped_y
+-                    ema_x, ema_y = (alpha * mapped_x) + ((1 - alpha) * ema_x), (alpha * mapped_y) + ((1 - alpha) * ema_y)
++                    
++                    # PHASE 25: MAGNETIC CURSOR LOCK (Anti-Jitter)
++                    # When the thumb pulls inward to click, it inherently twitches the index finger mechanically.
++                    # We freeze the spatial matrix mathematically if the thumb breaks the 60px proximity barrier!
++                    if dist_index < 60 and not is_fist:
++                        pass # Freeze coordinates so the click drops absolutely flawlessly dead-center.
++                    else:
++                        ema_x, ema_y = (alpha * mapped_x) + ((1 - alpha) * ema_x), (alpha * mapped_y) + ((1 - alpha) * ema_y)
+                     
+                     # Track relative movement distance unconditionally for Swiping Macros
+@@ -297,4 +304,5 @@ def run_vision_engine():
+                             current_vision = "eye"
+                             last_active_vision = "" # Defeat the cached state immediately to force UI Pop-up render
++                            last_hand_check_time = current_time + 3.0 # Give the user 3 seconds to lower their hands!
+ 
+         # =========================================================
+@@ -361,29 +369,34 @@ def run_vision_engine():
+                 else: mouth_was_open = False
+ 
+-                # WINK DETECTION (L/R Clicks)
+-                is_left_wink = left_EAR < WINK_THRESHOLD and right_EAR > left_EAR + 0.05
+-                is_right_wink = right_EAR < WINK_THRESHOLD and left_EAR > right_EAR + 0.05
++                # BLINKS, CLICKS, & SCROLLING
+                 both_closed = left_EAR < EAR_THRESHOLD and right_EAR < EAR_THRESHOLD
+-
+-                if is_left_wink and not both_closed and not right_winking:
+-                    if not left_winking: left_wink_time = current_time; left_winking = True
+-                    elif current_time - left_wink_time > WINK_HOLD_TIME and current_time - last_gesture_time > GESTURE_COOLDOWN:
+-                        pyautogui.click(); last_gesture_time = current_time; left_winking = False
+-                else: left_winking = False
+-
+-                if is_right_wink and not both_closed and not left_winking:
+-                    if not right_winking: right_wink_time = current_time; right_winking = True
+-                    elif current_time - right_wink_time > WINK_HOLD_TIME and current_time - last_gesture_time > GESTURE_COOLDOWN:
+-                        pyautogui.rightClick(); last_gesture_time = current_time; right_winking = False
+-                else: right_winking = False
+-
+-                # BLINKS & SCROLLING
+-                if both_closed and not eyes_closed and current_time - last_gesture_time > 0.1: eyes_closed = True
++                
++                if both_closed and not eyes_closed and current_time - last_gesture_time > 0.1: 
++                    eyes_closed = True
++                    eyes_closed_time = current_time
++                elif both_closed and eyes_closed:
++                    if current_time - eyes_closed_time > 2.0:
++                        print("\n[⚡ COMMAND DETECTED] Eyes closed intentionally. Routing OS Power to Hand Engine...")
++                        try:
++                            with open(STATE_FILE, "r") as f: state_data = json.load(f)
++                        except: state_data = {}
++                        state_data["vision_mode"] = "hand"
++                        with open(STATE_FILE, "w") as f: json.dump(state_data, f)
++                        current_vision = "hand"
++                        last_active_vision = ""
++                        eyes_closed_time = current_time # Reset to prevent spam
+                 elif not both_closed and eyes_closed:
+-                    blink_count = 1 if current_time - last_blink_time > DOUBLE_BLINK_TIME else int(blink_count) + 1
+-                    last_blink_time, eyes_closed = current_time, False
+-                    if blink_count == 1: pyautogui.click()
+-                    elif blink_count == 2: pyautogui.doubleClick()
+-                    elif blink_count >= 3: pyautogui.hotkey('win', 'printscreen'); blink_count = 0
++                    duration = current_time - eyes_closed_time
++                    eyes_closed = False
++                    
++                    if duration < 0.45: # FAST BLINK -> Left Clicks
++                        blink_count = 1 if current_time - last_blink_time > DOUBLE_BLINK_TIME else int(blink_count) + 1
++                        last_blink_time = current_time
++                        if blink_count == 1: pyautogui.click()
++                        elif blink_count == 2: pyautogui.doubleClick()
++                        elif blink_count >= 3: pyautogui.hotkey('win', 'printscreen'); blink_count = 0
++                    elif 0.45 <= duration < 2.0: # MEDIUM BLINK HOLD -> Right Click
++                        pyautogui.rightClick()
++                        
+                     last_gesture_time = current_time
+                 
+diff --git a/src/voice_engine.py b/src/voice_engine.py
+index 4e25e535..c34f740b 100644
+--- a/src/voice_engine.py
++++ b/src/voice_engine.py
+@@ -207,5 +207,5 @@ def ask_local_brain(query):
+         
+         # Fallback to moondream if available, otherwise just pick the first one
+-        chosen_model = "moondream:latest" if any("moondream" in m for m in models) else (models[0] if models else "llama3:8b-instruct-q4_K_M")
++        chosen_model = "llama3:8b-instruct-q4_K_M" if any("llama3" in m for m in models) else (models[0] if models else "llama3:8b-instruct-q4_K_M")
+ 
+         url = "http://localhost:11434/api/generate"
+@@ -223,6 +223,5 @@ def adjust_volume(direction):
+         comtypes.CoInitialize()
+         devices = AudioUtilities.GetSpeakers()
+-        interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+-        volume = cast(interface, POINTER(IAudioEndpointVolume))
++        volume = devices.EndpointVolume
+         current = volume.GetMasterVolumeLevelScalar()
+         change = 0.15 if direction == "up" else -0.15
+@@ -264,4 +263,13 @@ def execute_logic_chain(full_command):
+         global CURRENT_VOICE_MODE
+         
++        # --- PHASE 15: DYNAMIC WAKE WORDS ---
++        if cmd.startswith("change model name to "):
++            new_name = cmd.replace("change model name to ", "").strip()
++            if new_name:
++                store_memory("dynamic_wake_word", new_name)
++                results.append(f"Model Name changed to {new_name}")
++                speak(f"Configured. I will now respond to the wake word {new_name}.")
++            continue
++            
+         # --- PHASE 10: CONTEXTUAL VOICE MODES & VISION TOGGLES ---
+         if cmd in ["activate study mode", "study mode", "switch to study mode"]:
+@@ -275,4 +283,9 @@ def execute_logic_chain(full_command):
+             results.append("Movie Mode On")
+             continue
++        elif cmd in ["activate superpower mode", "superpower mode", "switch to superpower mode"]:
++            with state_lock: CURRENT_VOICE_MODE = "superpower"
++            speak("Superpower mode active. Absolute raw listening initialized. Blind accessibility unthrottled.")
++            results.append("Superpower Mode On")
++            continue
+         elif any(w in cmd for w in ["normal mode", "deactivate study mode", "deactivate movie mode", "exit mode", "quit mode"]):
+             with state_lock: CURRENT_VOICE_MODE = "normal"
+@@ -395,4 +408,14 @@ def execute_logic_chain(full_command):
+             continue
+ 
++        elif cmd.startswith("ask "):
++            query = cmd.replace("ask ", "", 1).strip()
++            results.append("Asking Brain...")
++            speak(f"Let me think about {query}.")
++            def ask_task():
++                answer = ask_local_brain(query)
++                speak(answer)
++            threading.Thread(target=ask_task, daemon=True).start()
++            continue
++
+         # --- VISION CONTEXT (Phase 4) ---
+         elif cmd.startswith("look") or "on my screen" in cmd or "read" in cmd:
+@@ -481,5 +504,5 @@ def execute_logic_chain(full_command):
+                     with open(os.path.join(desk, filename), "w", encoding="utf-8") as f:
+                         f.write(f"# Research Report: {topic}\n\n{report}")
+-                    speak(f"Your research report on {topic} is ready on the desktop.")
++                    speak(f"Your research report on {topic} is ready. Here is a summary: {report}")
+                 except Exception as e:
+                     speak(f"Research failed.")
+@@ -757,6 +780,5 @@ def _get_system_volume():
+     comtypes.CoInitialize()
+     devices = AudioUtilities.GetSpeakers()
+-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+-    return cast(interface, POINTER(IAudioEndpointVolume))
++    return devices.EndpointVolume
+ 
+ def set_system_mute(mute: bool):
+@@ -770,6 +792,16 @@ def set_system_mute(mute: bool):
+ # --- 🎤 THE OMNI-EAR (SENSITIVE MODE) ---
+ def run_tommy(queue=None):
+-    porcupine = pvporcupine.create(access_key=ACCESS_KEY, keyword_paths=[WAKE_WORD_PATH], sensitivities=[0.99])
+-    recorder = PvRecorder(device_index=-1, frame_length=porcupine.frame_length)
++    global CURRENT_VOICE_MODE
++    try:
++        porcupine = pvporcupine.create(access_key=ACCESS_KEY, keyword_paths=[WAKE_WORD_PATH], sensitivities=[0.99])
++        recorder = PvRecorder(device_index=-1, frame_length=porcupine.frame_length)
++    except Exception as e:
++        print(f"\n[🚫 PICOVOICE ERROR] Wake-word initialization failed: {e}")
++        print("[ℹ️] Switching to NORMAL AMBIENT MODE (continuous listening) as fallback.")
++        with state_lock:
++            CURRENT_VOICE_MODE = "normal_ambient"
++        porcupine = None
++        recorder = None
++
+     r = sr.Recognizer()
+ 
+@@ -805,5 +837,6 @@ def run_tommy(queue=None):
+ 
+     speak("Tommy systems online. I am ready, Architect.")
+-    recorder.start()
++    if recorder:
++        recorder.start()
+ 
+     try:
+@@ -813,4 +846,11 @@ def run_tommy(queue=None):
+                 
+             if current_mode == "normal":
++                if porcupine is None or recorder is None:
++                    print("\r[WAKE-WORD ERROR] API key limit. Forcing Ambient Normal mode.", end="", flush=True)
++                    with state_lock:
++                        CURRENT_VOICE_MODE = "normal_ambient"
++                    time.sleep(1)
++                    continue
++
+                 # Ensure the background recorder is actually running!
+                 if not recorder.is_recording:
+@@ -882,12 +922,12 @@ def run_tommy(queue=None):
+                     finally:
+                         print("   [MIC OS DRIVER ACQUIRED] Restarting PvRecorder...")
+-                        recorder.start()
++                        if recorder: recorder.start()
+                                 
+             # Phase 10 & 12: Free-Voice Native Modes (Including Blind Accessibility)
+-            elif current_mode in ["study", "movie", "superpower"]:
++            elif current_mode in ["study", "movie", "superpower", "normal_ambient"]:
+                 if voice_ui: voice_ui.set_color("green")
+                 
+                 # Absolutely kill the PvRecorder so it doesn't fight the OS lock
+-                if recorder.is_recording:
++                if recorder and recorder.is_recording:
+                     recorder.stop()
+                 
+@@ -902,8 +942,32 @@ def run_tommy(queue=None):
+                             # Process contextual commands without Wake Word
+                             valid_command = None
++                            
++                            # --- Dynamic Wake Word Extraction ---
++                            dyn_name = recall_memory("dynamic_wake_word")
++                            wake_words = ["hey tommy", "tommy", "hey johnny", "hey dummy"]
++                            if dyn_name:
++                                wake_words.append(dyn_name.lower())
++                                wake_words.append("hey " + dyn_name.lower())
++                                
++                            has_wake_word = False
++                            extracted_cmd = command
++                            for w in wake_words:
++                                if command.startswith(w):
++                                    has_wake_word = True
++                                    extracted_cmd = command[len(w):].strip()
++                                    break
++                                    
+                             if "normal mode" in command or "exit mode" in command:
+                                 valid_command = "switch to normal mode"
++                            elif current_mode == "normal_ambient":
++                                # Enforce strict Wake-Word checks on the ambient payload!
++                                if has_wake_word and extracted_cmd:
++                                    valid_command = extracted_cmd
++                                else:
++                                    valid_command = None
+                             elif current_mode == "superpower":
+-                                valid_command = command  # Blind Operators can execute ANY command without filtering
++                                # Superpower is for BLIND operators. It executes every word unconditionally!
++                                # Only fires when literally activated via voice command.
++                                valid_command = extracted_cmd if has_wake_word else command
+                             elif current_mode == "study":
+                                 if any(w in command for w in ["scroll down", "scroll up", "bright", "dark", "volume"]):
+@@ -932,7 +996,12 @@ def run_tommy(queue=None):
+     finally:
+         set_system_mute(False)   # always leave audio unmuted on exit
+-        recorder.stop()
+-        porcupine.delete()
+-        recorder.delete()
++        if recorder:
++            try: recorder.stop()
++            except: pass
++            try: recorder.delete()
++            except: pass
++        if porcupine:
++            try: porcupine.delete()
++            except: pass
+ 
+ if __name__ == "__main__":

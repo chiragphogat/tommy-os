@@ -6,7 +6,7 @@ import numpy as np
 import time
 import os
 import json
-from math import hypot
+from math import hypot, atan2, degrees
 from datetime import datetime
 import threading
 import screen_brightness_control as sbc
@@ -33,10 +33,10 @@ SCROLL_COOLDOWN = 0.1
 SMOOTHENING = 7              
 SCROLL_AMOUNT = 120
 
-LEFT_BOUND = 0.35
-RIGHT_BOUND = 0.65
-TOP_BOUND = 0.30
-BOTTOM_BOUND = 0.70
+LEFT_BOUND = 0.40
+RIGHT_BOUND = 0.60
+TOP_BOUND = 0.35
+BOTTOM_BOUND = 0.65
 
 # --- OS STATE & IPC LOOP ---
 STATE_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".tommy_state.json")
@@ -213,14 +213,20 @@ def run_vision_engine():
                         try: pyautogui.moveTo(clocX, clocY)
                         except: pass
                         
+                        # Dedicated Undo (`Ctrl+Z`, 3-Finger Pinch)
+                        if dist_index < 55 and dist_middle < 55:
+                            if current_time - last_macro_time > 0.8: # Cooldown
+                                pyautogui.hotkey('ctrl', 'z')
+                                last_macro_time = current_time
+                        
                         # Selection / Left Click 
-                        if dist_index < 55: 
+                        if dist_index < 55 and dist_middle >= 55: 
                             if not previous_pinch: pyautogui.mouseDown(); previous_pinch = True
                         else: 
                             if previous_pinch: pyautogui.mouseUp(); previous_pinch = False
                             
                         # Dedicated Copy
-                        if dist_middle < 55: 
+                        if dist_middle < 55 and dist_index >= 55: 
                             if not previous_right_pinch: pyautogui.hotkey('ctrl', 'c'); previous_right_pinch = True
                         else: previous_right_pinch = False
                         
@@ -331,11 +337,10 @@ def run_vision_engine():
             results = face_mesh.process(imgRGB)
             if results.multi_face_landmarks:
                 landmarks = results.multi_face_landmarks[0].landmark
-                left_iris, right_iris = landmarks[468], landmarks[473]
-
-                # --- Cursor Control ---
-                iris_x, iris_y = (left_iris.x + right_iris.x) / 2.0, (left_iris.y + right_iris.y) / 2.0
-                norm_x, norm_y = (iris_x - LEFT_BOUND) / (RIGHT_BOUND - LEFT_BOUND), (iris_y - TOP_BOUND) / (BOTTOM_BOUND - TOP_BOUND)
+                # --- Cursor Control (Nose Pointing stabilization) ---
+                nose_tip = landmarks[1]
+                nose_x, nose_y = nose_tip.x, nose_tip.y
+                norm_x, norm_y = (nose_x - LEFT_BOUND) / (RIGHT_BOUND - LEFT_BOUND), (nose_y - TOP_BOUND) / (BOTTOM_BOUND - TOP_BOUND)
                 norm_x, norm_y = max(0.0, min(1.0, norm_x)), max(0.0, min(1.0, norm_y))
                 screen_x, screen_y = norm_x * screen_w, norm_y * screen_h
                 
@@ -358,8 +363,9 @@ def run_vision_engine():
                 left_EAR, right_EAR = (left_EAR * 0.6) + (calculate_ear(l_eye, cam_w, cam_h) * 0.4), (right_EAR * 0.6) + (calculate_ear(r_eye, cam_w, cam_h) * 0.4)
                 mouth_MAR = (mouth_MAR * 0.6) + (calculate_mar(mouth, cam_w, cam_h) * 0.4)
 
-                # MOUTH OPEN (Toggle Drag Mode)
-                if mouth_MAR > MOUTH_AR_THRESHOLD:
+                # MOUTH Modifier
+                mouth_open = mouth_MAR > MOUTH_AR_THRESHOLD
+                if mouth_open:
                     if not mouth_was_open and current_time - last_gesture_time > GESTURE_COOLDOWN:
                         eye_drag_mode = not eye_drag_mode
                         if eye_drag_mode: pyautogui.mouseDown()
@@ -368,14 +374,35 @@ def run_vision_engine():
                         mouth_was_open = True
                 else: mouth_was_open = False
 
-                # BLINKS, CLICKS, & SCROLLING
+                # BLINKS, CLICKS, WINKS & SCROLLING
                 both_closed = left_EAR < EAR_THRESHOLD and right_EAR < EAR_THRESHOLD
+                left_closed = left_EAR < WINK_THRESHOLD and right_EAR > WINK_THRESHOLD
+                right_closed = right_EAR < WINK_THRESHOLD and left_EAR > WINK_THRESHOLD
+
+                # HEAD ROLL (Tilting)
+                dx, dy = landmarks[263].x - landmarks[33].x, landmarks[263].y - landmarks[33].y
+                head_roll = degrees(atan2(dy, dx))
+
+                if current_time - last_gesture_time > 1.0:
+                    if head_roll > 15:
+                        pyautogui.press('nexttrack'); last_gesture_time = current_time
+                    elif head_roll < -15:
+                        pyautogui.press('prevtrack'); last_gesture_time = current_time
+                        
+                    if left_closed and not both_closed:
+                        if mouth_open: pyautogui.hotkey('alt', 'tab')
+                        else: pyautogui.hotkey('ctrl', 'c')
+                        last_gesture_time = current_time
+                    elif right_closed and not both_closed:
+                        if mouth_open: pyautogui.hotkey('ctrl', 'a')
+                        else: pyautogui.hotkey('ctrl', 'v')
+                        last_gesture_time = current_time
                 
                 if both_closed and not eyes_closed and current_time - last_gesture_time > 0.1: 
                     eyes_closed = True
                     eyes_closed_time = current_time
                 elif both_closed and eyes_closed:
-                    if current_time - eyes_closed_time > 2.0:
+                    if current_time - eyes_closed_time > 3.0:
                         print("\n[⚡ COMMAND DETECTED] Eyes closed intentionally. Routing OS Power to Hand Engine...")
                         try:
                             with open(STATE_FILE, "r") as f: state_data = json.load(f)
@@ -384,28 +411,42 @@ def run_vision_engine():
                         with open(STATE_FILE, "w") as f: json.dump(state_data, f)
                         current_vision = "hand"
                         last_active_vision = ""
-                        eyes_closed_time = current_time # Reset to prevent spam
+                        eyes_closed_time = current_time
                 elif not both_closed and eyes_closed:
                     duration = current_time - eyes_closed_time
                     eyes_closed = False
                     
-                    if duration < 0.45: # FAST BLINK -> Left Clicks
-                        blink_count = 1 if current_time - last_blink_time > DOUBLE_BLINK_TIME else int(blink_count) + 1
+                    if duration < 0.45: # FAST BLINK
+                        blink_count += 1
                         last_blink_time = current_time
-                        if blink_count == 1: pyautogui.click()
-                        elif blink_count == 2: pyautogui.doubleClick()
-                        elif blink_count >= 3: pyautogui.hotkey('win', 'printscreen'); blink_count = 0
-                    elif 0.45 <= duration < 2.0: # MEDIUM BLINK HOLD -> Right Click
-                        pyautogui.rightClick()
+                    elif 0.45 <= duration < 2.0: # MEDIUM BLINK HOLD
+                        pyautogui.press('playpause')
+                        last_gesture_time = current_time
                         
-                    last_gesture_time = current_time
+                # MULTI-BLINK EXECUTION BUFFER
+                if blink_count > 0 and current_time - last_blink_time > DOUBLE_BLINK_TIME:
+                    if mouth_open:
+                        if blink_count == 2: pyautogui.hotkey('ctrl', 'z')
+                    else:
+                        if blink_count == 1: pyautogui.click()
+                        elif blink_count == 2: pyautogui.rightClick()
+                        elif blink_count == 3: pyautogui.hotkey('ctrl', 'w')
+                        elif blink_count == 4: pyautogui.doubleClick()
+                    blink_count = 0
                 
+                # SCROLLING / VOLUME
                 if left_EAR > EAR_THRESHOLD and right_EAR > EAR_THRESHOLD and not eye_drag_mode:
                     if current_time - last_scroll_time > SCROLL_COOLDOWN:
-                        if norm_y < 0.20: pyautogui.scroll(SCROLL_AMOUNT); last_scroll_time = current_time
-                        elif norm_y > 0.80: pyautogui.scroll(-SCROLL_AMOUNT); last_scroll_time = current_time
+                        if norm_y < 0.20:
+                            if mouth_open: pyautogui.press('volumeup')
+                            else: pyautogui.scroll(SCROLL_AMOUNT)
+                            last_scroll_time = current_time
+                        elif norm_y > 0.80:
+                            if mouth_open: pyautogui.press('volumedown')
+                            else: pyautogui.scroll(-SCROLL_AMOUNT)
+                            last_scroll_time = current_time
 
-                cv2.putText(img, "EYE TRACKING ACTIVE", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                cv2.putText(img, "NOSE TRACKING ACTIVE (EYE CLICKS)", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
                 if eye_drag_mode: cv2.putText(img, "[DRAGGING]", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         cv2.imshow("T.O.M.M.Y. Unified Vision Engine", img)
