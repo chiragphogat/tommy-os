@@ -5,3 +5,14 @@ __pycache__/
 .env*
 .vscode/
 *.pyc
+
+# Docs & IP
+presentation.md
+*.tex
+*.pdf
+*.docx
+*.rtf
+changes.txt
+diff.txt
+toc.png
+assets/
