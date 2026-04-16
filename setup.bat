@@ -27,62 +27,34 @@ exit /b
 
 :INSTALL_REQUIREMENTS
 :: --- 2. PYTHON DRIVER INSTALLATION ---
-echo [2] Installing Core Physics and Hardware Drivers...
+echo [2] Setting up Virtual Environment and Installing Core Drivers...
+if not exist venv\Scripts\activate.bat (
+    echo Creating virtual environment 'venv'...
+    call python -m venv venv
+)
+echo Activating virtual environment...
+call venv\Scripts\activate.bat
+
+echo Installing dependencies...
 call pip install -r requirements.txt
 echo.
 
-:: --- 3. NEURAL LLM PROMPT ---
+:: --- 3. DETERMINISTIC NLP MODEL ---
 echo ========================================================
-echo [OPTIONAL NEURAL CORE] 
+echo [3] Downloading Deterministic NLP Model (spaCy)
 echo T.O.M.M.Y natively bypasses your mouse and controls your OS
 echo using lightweight, purely local Python geometry math.
-echo.
-echo However, if you want Tommy to have a high "IQ" 
-echo (Read your screen, summarize articles, act as an AI agent), 
-echo he requires an absolute heavy-weight local Neural Engine (Ollama).
-echo.
-echo NOTE: Installing the Neural Engine requires roughly 6-8GB+ 
-echo of disk space. Tommy works perfectly fine without it!
+echo Downloading English core model for syntax routing...
 echo ========================================================
-set /P INSTALL_LLM="Do you want to install the heavy Neural Engine? (Y/N): "
-
-if /I "%INSTALL_LLM%"=="N" goto SKIP_LLM
-if /I "%INSTALL_LLM%"=="n" goto SKIP_LLM
-
+call python -m spacy download en_core_web_sm
 echo.
-echo [3] Bootstrapping Neural System Architecture...
-ollama -v >nul 2>&1
-IF %ERRORLEVEL% NEQ 0 goto INSTALL_OLLAMA
-
-:PULL_MODELS
-echo [INFO] Injecting Local AI Weights... Do NOT close this window.
-echo Pulling Primary Logic Core (llama3)...
-call ollama pull deepseek-r1:8b
-echo Pulling Screen Vision Core (moondream)...
-call ollama pull qwen3-vl:4b
-goto FINISH
-
-
-:INSTALL_OLLAMA
-echo [INFO] Ollama is missing. Downloading via Winget...
-winget install -e --id Ollama.Ollama --accept-package-agreements --accept-source-agreements
-echo.
-echo [SYSTEM ALERT] Ollama was just installed! 
-echo To ensure the models load correctly, please restart this script or
-echo manually run: ollama pull llama3:8b-instruct-q4_K_M
-goto FINISH
-
-
-:SKIP_LLM
-echo.
-echo [3] Skipping Neural Engine. Tommy will operate in Pure OS-Control Mode!
-
 
 :FINISH
 echo.
 echo ========================================================
 echo   INSTALLATION COMPLETE.
 echo   Remember to add your free Picovoice token to the .env file!
-echo   To launch the OS, simply run: python tommy_os.py
+echo   To launch the OS, first activate the environment: venv\Scripts\activate
+echo   Then simply run: python tommy_os.py
 echo ========================================================
 pause

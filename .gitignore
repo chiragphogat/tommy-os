@@ -1,9 +1,7 @@
 venv/
+venv
 __pycache__/
 .env
-myenv/
-.tommy_state.json
-.tommy_memory.json
-assets/*.ppn
-.*.swp
-*.log
+.env*
+.vscode/
+*.pyc
