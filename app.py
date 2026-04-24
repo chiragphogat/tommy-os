@@ -73,151 +73,135 @@ components.html("""
     <style>
         body { margin: 0; display:flex; flex-direction:column; align-items:center; font-family: 'Courier New', monospace; background: transparent; color: #fff; }
         .canvas-container { position: relative; width: 100%; max-width: 900px; }
-        canvas { width: 100%; height: 450px; background: #010409; border: 2px solid #30363d; border-radius: 8px; cursor: crosshair; box-shadow: 0 10px 40px rgba(0,0,0,0.8); transition: border-color 0.3s, box-shadow 0.3s; }
-        .overlay-text { position: absolute; top: 20px; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 10; font-weight: bold; font-size: 1.5rem; text-shadow: 0 0 10px #000; }
-        .status-bar { margin-top: 15px; width: 100%; max-width: 900px; height: 15px; background: #111; border-radius: 8px; overflow: hidden; border: 1px solid #333; }
-        #lockBar { width: 0%; height: 100%; background: #00ff41; transition: width 0.1s linear; }
-        #simStatus { color: #8b949e; font-size: 1.1rem; margin-top: 10px; font-weight: bold; text-align: center; }
-        
-        .win-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 255, 65, 0.1); display: none;
-            flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; pointer-events: none;
-            backdrop-filter: blur(2px);
-        }
+        canvas { width: 100%; height: 450px; background: #010409; border: 2px solid #30363d; border-radius: 8px; cursor: none; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .overlay-text { position: absolute; top: 15px; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 10; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 10px #000; color: #8b949e; }
+        .win-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 255, 65, 0.1); display: none; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; pointer-events: none; backdrop-filter: blur(2px); z-index: 20;}
         .win-overlay h2 { color: #00ff41; font-size: 3rem; text-shadow: 0 0 20px #00ff41; margin: 0; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     </style>
     
     <div class="canvas-container">
-        <div class="overlay-text" id="instructText" style="color:#00ff41; animation: pulse 1s infinite;">>_ USE YOUR MOUSE TO CHASE THE RED TARGET _<</div>
+        <div class="overlay-text">SIMULATOR: MOUSE = NOSE TRACKING <span style="color:#00ff41;">|</span> PRESS [SPACEBAR] = BLINK TO CLICK</div>
         <canvas id="simCanvas"></canvas>
         <div class="win-overlay" id="winScreen">
-            <h2>SYSTEM OVERRIDE SUCCESSFUL</h2>
-            <p style="color:#fff; font-size:1.2rem; background: #000; padding: 5px 10px;">FaceMesh Telemetry Locked at 18ms.</p>
+            <h2 id="winTitle">KERNEL OVERRIDE</h2>
+            <p style="color:#fff; font-size:1.2rem; background: #000; padding: 5px 10px;">Ocular Click Protocol Engaged at 18ms.</p>
         </div>
     </div>
-    <div class="status-bar"><div id="lockBar"></div></div>
-    <div id="simStatus">STATUS: AWAITING TARGET ACQUISITION</div>
 
     <script>
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // Match internal resolution to display size for sharp rendering
-        canvas.width = 900;
-        canvas.height = 450;
+        canvas.width = 900; canvas.height = 450;
         
         let mouseX = canvas.width / 2; let mouseY = canvas.height / 2;
-        let targetX = canvas.width / 2; let targetY = canvas.height / 2;
-        let tVx = 6; let tVy = 6;
-        let lockScore = 0;
-        let gameState = "PLAYING"; // PLAYING, WIN
-        let particles = [];
+        let isBlinking = false;
+        
+        // Buttons
+        const buttons = [
+            { x: 200, y: 225, radius: 50, color: '#30363d', label: 'SYS_01', active: false },
+            { x: 450, y: 225, radius: 60, color: '#30363d', label: 'CORE', active: false },
+            { x: 700, y: 225, radius: 50, color: '#30363d', label: 'NET_02', active: false }
+        ];
+
+        // Background Particles
+        let nodes = [];
+        for(let i=0; i<80; i++) {
+            nodes.push({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random()-0.5)*1, vy: (Math.random()-0.5)*1
+            });
+        }
         
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            // Scale mouse coordinates to internal canvas resolution
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            mouseX = (e.clientX - rect.left) * scaleX;
-            mouseY = (e.clientY - rect.top) * scaleY;
+            mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
         });
 
-        function createExplosion(x, y) {
-            for(let i=0; i<60; i++) {
-                particles.push({
-                    x: x, y: y,
-                    vx: (Math.random() - 0.5) * 20,
-                    vy: (Math.random() - 0.5) * 20,
-                    life: 1.0,
-                    color: Math.random() > 0.5 ? '#F85149' : '#00ff41'
-                });
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                isBlinking = true;
+                // Check if hovering over a button
+                for(let b of buttons) {
+                    let dx = mouseX - b.x; let dy = mouseY - b.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < b.radius) {
+                        triggerWin(b.label);
+                    }
+                }
             }
+        });
+        window.addEventListener('keyup', (e) => {
+            if(e.code === 'Space' || e.key === ' ') isBlinking = false;
+        });
+
+        function triggerWin(btnLabel) {
+            document.getElementById('winTitle').innerText = "[" + btnLabel + "] ENGAGED";
+            document.getElementById('winScreen').style.display = "flex";
+            setTimeout(() => { document.getElementById('winScreen').style.display = "none"; }, 1500);
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            ctx.fillStyle = '#010409';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#010409'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw Grid
-            ctx.strokeStyle = "rgba(0, 255, 65, 0.1)"; ctx.lineWidth = 1;
-            for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
-            for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
-
-            if (gameState === "PLAYING") {
-                // Move Target
-                targetX += tVx; targetY += tVy;
-                if(targetX < 30 || targetX > canvas.width - 30) { tVx *= -1; tVx += (Math.random() - 0.5)*3; }
-                if(targetY < 30 || targetY > canvas.height - 30) { tVy *= -1; tVy += (Math.random() - 0.5)*3; }
+            // Draw Background Nodes
+            ctx.strokeStyle = "rgba(0, 255, 65, 0.1)"; ctx.fillStyle = "rgba(0, 255, 65, 0.3)";
+            for(let i=0; i<nodes.length; i++) {
+                let n = nodes[i];
+                n.x += n.vx; n.y += n.vy;
+                if(n.x < 0 || n.x > canvas.width) n.vx *= -1;
+                if(n.y < 0 || n.y > canvas.height) n.vy *= -1;
+                ctx.beginPath(); ctx.arc(n.x, n.y, 2, 0, Math.PI*2); ctx.fill();
                 
-                tVx = Math.max(-8, Math.min(8, tVx));
-                tVy = Math.max(-8, Math.min(8, tVy));
-
-                // Draw Target
-                ctx.beginPath(); ctx.arc(targetX, targetY, 15, 0, Math.PI * 2);
-                ctx.fillStyle = '#F85149'; ctx.fill();
-                
-                // Math
-                let dx = mouseX - targetX; let dy = mouseY - targetY;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 55) {
-                    ctx.strokeStyle = '#00ff41'; ctx.lineWidth = 3;
-                    lockScore += 0.8; // Takes roughly 2 seconds to fill
-                    document.getElementById('simStatus').innerText = "STATUS: TELEMETRIC LOCK ENGAGED (HOLD POSITION)";
-                    document.getElementById('simStatus').style.color = "#00ff41";
-                    canvas.style.borderColor = "#00ff41";
-                    canvas.style.boxShadow = "0 0 40px rgba(0,255,65,0.5)";
-                } else {
-                    ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 1;
-                    lockScore = Math.max(0, lockScore - 1);
-                    document.getElementById('simStatus').innerText = "STATUS: TRACKING TARGET... (MOVE MOUSE INSIDE TARGET)";
-                    document.getElementById('simStatus').style.color = "#8b949e";
-                    canvas.style.borderColor = "#30363d";
-                    canvas.style.boxShadow = "0 10px 40px rgba(0,0,0,0.8)";
+                // Nodes react to mouse gravity
+                let dx = mouseX - n.x; let dy = mouseY - n.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < 150) {
+                    ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(mouseX, mouseY); ctx.stroke();
                 }
-                
-                document.getElementById('lockBar').style.width = lockScore + "%";
-                
-                // Draw 55px Mouse Boundary
-                ctx.beginPath(); ctx.arc(mouseX, mouseY, 55, 0, Math.PI * 2); ctx.stroke();
-                // Connection Line
-                ctx.beginPath(); ctx.moveTo(mouseX, mouseY); ctx.lineTo(targetX, targetY); ctx.stroke();
-                
-                // Check Win
-                if (lockScore >= 100) {
-                    gameState = "WIN";
-                    createExplosion(targetX, targetY);
-                    document.getElementById('winScreen').style.display = "flex";
-                    document.getElementById('instructText').style.display = "none";
-                    document.getElementById('simStatus').innerText = "STATUS: TARGET DESTROYED. KERNEL OVERRIDE.";
-                    setTimeout(() => {
-                        // Reset Game after 5 seconds
-                        gameState = "PLAYING";
-                        lockScore = 0;
-                        document.getElementById('winScreen').style.display = "none";
-                        document.getElementById('instructText').style.display = "block";
-                        document.getElementById('lockBar').style.width = "0%";
-                    }, 5000);
-                }
-            } else if (gameState === "WIN") {
-                // Update and draw particles
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    let p = particles[i];
-                    p.x += p.vx; p.y += p.vy;
-                    p.life -= 0.02;
-                    if (p.life <= 0) { particles.splice(i, 1); continue; }
-                    ctx.globalAlpha = p.life;
-                    ctx.fillStyle = p.color;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
-                }
-                ctx.globalAlpha = 1.0;
             }
+
+            // Draw Buttons
+            for(let b of buttons) {
+                let dx = mouseX - b.x; let dy = mouseY - b.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < b.radius) {
+                    ctx.fillStyle = "rgba(0, 255, 65, 0.2)";
+                    ctx.strokeStyle = "#00ff41";
+                    ctx.lineWidth = 3;
+                } else {
+                    ctx.fillStyle = "rgba(48, 54, 61, 0.5)";
+                    ctx.strokeStyle = "#8b949e";
+                    ctx.lineWidth = 1;
+                }
+                
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = dist < b.radius ? "#00ff41" : "#8b949e";
+                ctx.font = "bold 20px 'Courier New'"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.fillText(b.label, b.x, b.y);
+            }
+
+            // Draw Cursor (FaceMesh Node Simulator)
+            ctx.strokeStyle = isBlinking ? "#fff" : "#00ff41";
+            ctx.lineWidth = isBlinking ? 4 : 2;
+            ctx.beginPath(); ctx.arc(mouseX, mouseY, isBlinking ? 15 : 25, 0, Math.PI * 2); ctx.stroke();
+            
+            ctx.fillStyle = isBlinking ? "#fff" : "#00ff41";
+            ctx.beginPath(); ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2); ctx.fill();
+            
+            // Crosshairs
+            ctx.beginPath(); ctx.moveTo(mouseX-35, mouseY); ctx.lineTo(mouseX+35, mouseY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(mouseX, mouseY-35); ctx.lineTo(mouseX, mouseY+35); ctx.stroke();
         }
         animate();
     </script>
-""", height=550)
+""", height=480)
 st.markdown('</div>', unsafe_allow_html=True)
 
 
