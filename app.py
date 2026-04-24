@@ -423,19 +423,153 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================================
-# SECTION 6: FOOTER (ACADEMIC)
+# SECTION 6: FOOTER (ACADEMIC ARCHITECTS)
 # =========================================================================
-st.markdown("""
-<div style="background: #0a0a0a; border-top: 1px solid #222; padding: 60px 20px; text-align: center; margin-top: 40px;">
-    <h3 style="color:#58a6ff; font-size: 1.5rem; margin-bottom: 20px;">// ACADEMIC RESOURCES</h3>
-    <p style="color:#8b949e; max-width: 800px; margin: 0 auto 30px auto; line-height: 1.6;">
-        T.O.M.M.Y. was engineered at Lovely Professional University to evaluate the absolute limits of Multi-Process Hardware Concurrency on Python Operating System Wrappers.
-    </p>
-    <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; color: #fff;">
-        <div><b>Chirag Phogat</b><br><span style="color:#8b949e; font-size:0.9rem;">Lead Architect</span></div>
-        <div><b>Chava Harshavardhan</b><br><span style="color:#8b949e; font-size:0.9rem;">Gaze Estimation Math</span></div>
-        <div><b>Lalmalsawm Guite</b><br><span style="color:#8b949e; font-size:0.9rem;">Lead Researcher</span></div>
-        <div><b>Kaushal Pathak</b><br><span style="color:#8b949e; font-size:0.9rem;">Project Mentor</span></div>
+st.markdown('<div class="cinematic-section" style="padding-bottom: 100px;">', unsafe_allow_html=True)
+st.markdown('<h2 style="font-size: 3rem; text-align:center;">// ACADEMIC <span class="gradient-text">ARCHITECTS</span></h2>', unsafe_allow_html=True)
+st.markdown('<p style="color:#8b949e; text-align:center; max-width:800px; margin: 20px auto; font-size:1.1rem;">T.O.M.M.Y. was engineered at Lovely Professional University to evaluate the absolute limits of Multi-Process Hardware Concurrency on Python Operating System Wrappers.</p>', unsafe_allow_html=True)
+
+components.html("""
+    <style>
+        body { margin: 0; display:flex; justify-content:center; font-family: 'Courier New', monospace; background: transparent; }
+        .team-container { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; padding: 40px 20px; perspective: 1000px; }
+        
+        .card {
+            width: 220px; height: 320px;
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            transform-style: preserve-3d;
+        }
+        
+        .card:hover {
+            border-color: #00ff41;
+            box-shadow: 0 15px 40px rgba(0, 255, 65, 0.2);
+            transform: translateY(-10px);
+        }
+        
+        .avatar-wrapper {
+            width: 100%; height: 200px;
+            background: radial-gradient(circle, #161b22 0%, #010409 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        /* Sci-Fi Placeholder Image */
+        .avatar-wrapper img {
+            width: 80%; height: 80%; 
+            object-fit: contain; 
+            opacity: 0.6; 
+            transition: all 0.4s;
+            filter: grayscale(100%) sepia(100%) hue-rotate(70deg) saturate(300%) contrast(120%);
+        }
+        
+        .card:hover .avatar-wrapper img { 
+            opacity: 1; 
+            filter: grayscale(0%) sepia(0%); 
+            transform: scale(1.1);
+        }
+        
+        /* Cyberpunk Scanline Effect */
+        .scanline {
+            position: absolute; top: -100%; left: 0; width: 100%; height: 4px;
+            background: rgba(0, 255, 65, 0.8); 
+            box-shadow: 0 0 15px #00ff41, 0 0 30px #00ff41;
+            opacity: 0; transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .card:hover .scanline { opacity: 1; animation: scan 1.5s linear infinite; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        
+        /* Glitch overlay on hover */
+        .card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(0,255,65,0.1), transparent);
+            transform: skewX(-20deg); transition: 0.5s; z-index: 5; pointer-events: none;
+        }
+        .card:hover::before { left: 150%; }
+
+        .info { padding: 20px 15px; text-align: center; background: #010409; position: relative; z-index: 2;}
+        .name { color: #fff; font-size: 1.1rem; font-weight: bold; margin: 0; letter-spacing: 1px; }
+        .role { color: #00ff41; font-size: 0.8rem; margin-top: 8px; text-transform: uppercase; letter-spacing: 2px;}
+    </style>
+
+    <div class="team-container">
+        <!-- Developer 1 -->
+        <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+            <div class="avatar-wrapper">
+                <div class="scanline"></div>
+                <!-- Replace src with real photo URLs later! Currently using Sci-Fi Bot avatars -->
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Chirag&backgroundColor=transparent" alt="Chirag">
+            </div>
+            <div class="info">
+                <p class="name">CHIRAG PHOGAT</p>
+                <p class="role">> LEAD ARCHITECT</p>
+            </div>
+        </div>
+        
+        <!-- Developer 2 -->
+        <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+            <div class="avatar-wrapper">
+                <div class="scanline"></div>
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Chava&backgroundColor=transparent" alt="Chava">
+            </div>
+            <div class="info">
+                <p class="name">CHAVA HARSHA</p>
+                <p class="role">> GAZE MATH</p>
+            </div>
+        </div>
+        
+        <!-- Developer 3 -->
+        <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+            <div class="avatar-wrapper">
+                <div class="scanline"></div>
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Lalmalsawm&backgroundColor=transparent" alt="Lalmalsawm">
+            </div>
+            <div class="info">
+                <p class="name">LALMALSAWM GUITE</p>
+                <p class="role">> RESEARCHER</p>
+            </div>
+        </div>
+        
+        <!-- Developer 4 -->
+        <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+            <div class="avatar-wrapper">
+                <div class="scanline"></div>
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Kaushal&backgroundColor=transparent" alt="Kaushal">
+            </div>
+            <div class="info">
+                <p class="name">KAUSHAL PATHAK</p>
+                <p class="role">> PROJECT MENTOR</p>
+            </div>
+        </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+
+    <script>
+        // 3D Tilt Effect Physics
+        function tilt(e, card) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left; 
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -15; // Max 15deg tilt
+            const rotateY = ((x - centerX) / centerX) * 15;
+            
+            card.style.transform = `translateY(-10px) perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        }
+        
+        function resetTilt(card) {
+            card.style.transform = `translateY(0) perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+        }
+    </script>
+""", height=450)
+st.markdown('</div>', unsafe_allow_html=True)
