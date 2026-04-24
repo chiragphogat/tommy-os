@@ -303,12 +303,15 @@ st.markdown('<div class="cinematic-section">', unsafe_allow_html=True)
 st.markdown('<h2 style="font-size: 3rem; text-align:center;">>_ DEPLOY THE KERNEL</h2>', unsafe_allow_html=True)
 
 components.html("""
-    <div style="background: #010409; border: 1px solid #30363d; border-radius: 8px; width: 70%; margin: 40px auto; font-family: 'Courier New', monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden;">
-        <div style="background: #161b22; padding: 15px; border-bottom: 1px solid #30363d; display: flex; gap: 8px; align-items:center;">
-            <div style="width: 14px; height: 14px; border-radius: 50%; background: #ff5f56;"></div>
-            <div style="width: 14px; height: 14px; border-radius: 50%; background: #ffbd2e;"></div>
-            <div style="width: 14px; height: 14px; border-radius: 50%; background: #27c93f;"></div>
-            <div style="color: #8b949e; margin-left: 15px; font-size: 0.9rem;">setup.bat — PowerShell Handoff</div>
+    <div style="background: #010409; border: 1px solid #30363d; border-radius: 8px; width: 70%; margin: 40px auto; font-family: 'Courier New', monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; position: relative;">
+        <div style="background: #161b22; padding: 15px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items:center;">
+            <div style="display: flex; gap: 8px; align-items:center;">
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #ff5f56;"></div>
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #ffbd2e;"></div>
+                <div style="width: 14px; height: 14px; border-radius: 50%; background: #27c93f;"></div>
+                <div style="color: #8b949e; margin-left: 15px; font-size: 0.9rem;">setup.bat — PowerShell Handoff</div>
+            </div>
+            <button id="copyBtn" onclick="copyCmds()" style="background: transparent; border: 1px solid #00ff41; color: #00ff41; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold; transition: all 0.2s;">[ COPY COMMANDS ]</button>
         </div>
         <div style="padding: 30px; color: #fff; font-size: 1.2rem; line-height: 1.8;">
             <span style="color:#00ff41;">C:\\Windows\\System32></span> git clone https://github.com/chiragphogat/tommy-os.git<br>
@@ -322,14 +325,61 @@ components.html("""
             <span style="color:#3fb950; font-weight:bold;">PS C:\\tommy-os></span> python tommy_os.py<span style="animation: blink 1s infinite;">█</span>
         </div>
     </div>
-    <style>@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }</style>
-""", height=350)
+    <script>
+        function copyCmds() {
+            const text = "git clone https://github.com/chiragphogat/tommy-os.git\\ncd tommy-os\\n.\\\\setup.bat";
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            document.getElementById("copyBtn").innerText = "[ COPIED! ]";
+            document.getElementById("copyBtn").style.background = "#00ff41";
+            document.getElementById("copyBtn").style.color = "#000";
+            setTimeout(() => {
+                document.getElementById("copyBtn").innerText = "[ COPY COMMANDS ]";
+                document.getElementById("copyBtn").style.background = "transparent";
+                document.getElementById("copyBtn").style.color = "#00ff41";
+            }, 2000);
+        }
+    </script>
+    <style>
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        #copyBtn:hover { background: rgba(0,255,65,0.2) !important; }
+    </style>
+""", height=400)
+
+install_script = """@echo off
+color 0A
+echo ===================================================
+echo   T.O.M.M.Y. OS - REMOTE DEPLOYMENT INITIALIZED
+echo ===================================================
+echo.
+echo [*] Fetching kernel from GitHub...
+git clone https://github.com/chiragphogat/tommy-os.git
+cd tommy-os
+echo [*] Triggering native setup sandbox...
+call setup.bat
+pause
+"""
 
 st.markdown("""
-    <div style="text-align: center; margin-top: 30px;">
-        <a href="https://github.com/chiragphogat/tommy-os" target="_blank" style="background: #00ff41; color: #000; padding: 20px 60px; font-size: 1.5rem; font-family: 'Courier New', monospace; font-weight: 900; text-decoration: none; border-radius: 4px; display: inline-block; box-shadow: 0 0 30px rgba(0, 255, 65, 0.4); transition: transform 0.2s;">DOWNLOAD SOURCE CODE</a>
-    </div>
+    <style>
+        .stDownloadButton button { background: #00ff41; color: #000; padding: 15px 40px; font-size: 1.5rem; font-family: 'Courier New', monospace; font-weight: 900; text-decoration: none; border-radius: 4px; box-shadow: 0 0 30px rgba(0, 255, 65, 0.4); border: none; width: 100%; transition: transform 0.2s;}
+        .stDownloadButton button:hover { transform: scale(1.02); background: #00ff41; color: #000; border: none;}
+    </style>
 """, unsafe_allow_html=True)
+
+col_d1, col_d2, col_d3 = st.columns([1, 2, 1])
+with col_d2:
+    st.download_button(
+        label="⚡ DOWNLOAD 1-CLICK INSTALLER (.BAT)",
+        data=install_script,
+        file_name="install_tommy.bat",
+        mime="application/x-msdownload"
+    )
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 
