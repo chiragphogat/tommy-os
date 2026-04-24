@@ -252,7 +252,8 @@ components.html("""
         @keyframes flow { 0% { left: 0; opacity: 1; } 100% { left: 100%; opacity: 0; } }
         
         .tooltip { position: absolute; top: 120%; left: 50%; transform: translateX(-50%); width: 220px; background: rgba(13, 17, 23, 0.95); border: 1px solid #00ff41; border-radius: 6px; padding: 15px; text-align: left; opacity: 0; pointer-events: none; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,255,65,0.1); z-index: 10; backdrop-filter: blur(5px); }
-        .node:hover .tooltip { opacity: 1; top: 110%; }
+        .node:hover .tooltip { opacity: 1; top: 110%; pointer-events: auto; }
+        .tooltip::before { content: ''; position: absolute; bottom: 100%; left: 0; width: 100%; height: 20px; }
         .tt-title { color: #00ff41; font-weight: bold; border-bottom: 1px solid #30363d; padding-bottom: 5px; margin-bottom: 10px; font-size: 0.9rem;}
         .tt-body { color: #8b949e; font-size: 0.8rem; line-height: 1.5; }
     </style>
@@ -296,7 +297,7 @@ components.html("""
             </div>
         </div>
     </div>
-""", height=200)
+""", height=350)
 st.markdown('</div>', unsafe_allow_html=True)
 
 
