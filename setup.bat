@@ -1,6 +1,10 @@
 @echo off
 setlocal
 color 0A
+
+:: Navigate precisely to the folder where setup.bat is located
+cd /d "%~dp0"
+
 echo ========================================================
 echo   T.O.M.M.Y OS - AUTOMATED DEPLOYMENT PROTOCOL
 echo ========================================================
@@ -12,7 +16,7 @@ python --version >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 goto INSTALL_PYTHON
 echo Python visually verified.
 echo.
-goto INSTALL_REQUIREMENTS
+goto SETUP_VENV
 
 :INSTALL_PYTHON
 echo [WARNING] Python not found. Initiating automated Winget payload...
@@ -24,24 +28,25 @@ echo and re-open setup.bat to continue!
 pause
 exit /b
 
-
-:INSTALL_REQUIREMENTS
-:: --- 2. PYTHON DRIVER INSTALLATION ---
-echo [2] Setting up Virtual Environment and Installing Core Drivers...
-if not exist venv\Scripts\activate.bat (
-    echo Creating virtual environment 'venv'...
-    call python -m venv venv
+:SETUP_VENV
+:: --- 2. VIRTUAL ENVIRONMENT ARCHITECTURE ---
+echo [2] Initializing Virtual Environment...
+IF NOT EXIST "venv\" (
+    echo Creating new venv container...
+    python -m venv venv
 )
-echo Activating virtual environment...
+echo Activating Virtual Environment...
 call venv\Scripts\activate.bat
+echo.
 
-echo Installing dependencies...
+:: --- 3. PYTHON DRIVER INSTALLATION ---
+echo [3] Installing Core Physics and Hardware Drivers into venv...
 call pip install -r requirements.txt
 echo.
 
-:: --- 3. DETERMINISTIC NLP MODEL ---
+:: --- 4. DETERMINISTIC NLP MODEL ---
 echo ========================================================
-echo [3] Downloading Deterministic NLP Model (spaCy)
+echo [4] Downloading Deterministic NLP Model (spaCy)
 echo T.O.M.M.Y natively bypasses your mouse and controls your OS
 echo using lightweight, purely local Python geometry math.
 echo Downloading English core model for syntax routing...
@@ -54,7 +59,10 @@ echo.
 echo ========================================================
 echo   INSTALLATION COMPLETE.
 echo   Remember to add your free Picovoice token to the .env file!
-echo   To launch the OS, first activate the environment: venv\Scripts\activate
-echo   Then simply run: python tommy_os.py
+echo   Launching PowerShell Terminal in T.O.M.M.Y. Environment...
 echo ========================================================
-pause
+
+:: Spawn a native PowerShell instance, bypass execution policies to allow activate.ps1, and stay open
+start powershell -NoExit -ExecutionPolicy Bypass -Command "& { cd '%~dp0'; .\venv\Scripts\Activate.ps1; Clear-Host; Write-Host -ForegroundColor Green '========================================================'; Write-Host -ForegroundColor Green ' T.O.M.M.Y. VIRTUAL ENVIRONMENT ACTIVATED.'; Write-Host -ForegroundColor Green ' Press ENTER to launch the OS!'; Write-Host -ForegroundColor Green '========================================================'; [Microsoft.PowerShell.PSConsoleReadLine]::Insert('python tommy_os.py') }"
+
+exit /b
