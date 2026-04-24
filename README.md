@@ -18,9 +18,9 @@ For smooth, continuous day-to-day use, T.O.M.M.Y. prioritizes high-speed spatial
 
 1. **Clone it.** Bring this repository down locally onto your Windows rig.
 2. **Setup Script.** Double-click the `setup.bat` file. 
-   - This script auto-installs every single hardcore library Tommy needs (Python 3.10+ required).
-3. **The Local Deterministic Core (spaCy):**
-   - Tommy processes language using `spaCy`. `setup.bat` will automatically download the required English grammar models.
+   - This script will automatically create a fully isolated Python Virtual Environment (`venv`), protecting your system from dependency bloat.
+   - It downloads all physics trackers, requirements, and the deterministic `spaCy` NLP model seamlessly into this sandbox.
+   - Upon completion, it automatically spawns an elevated, green **PowerShell Terminal** with the environment locked and loaded. You just press `Enter` to run the OS!
 4. **Wake Word Configuration:**
    - We use Picovoice Porcupine to run the "Hey Tommy" listener cleanly on your CPU without leaking memory.
    - You must go to [Picovoice Console](https://console.picovoice.ai) and sign up for a free Access Key. 
