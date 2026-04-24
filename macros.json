@@ -1,0 +1,34 @@
+{
+    "left_wink": {
+        "action": "hotkey",
+        "keys": ["ctrl", "c"]
+    },
+    "right_wink": {
+        "action": "hotkey",
+        "keys": ["ctrl", "v"]
+    },
+    "left_wink+mouth_open": {
+        "action": "hotkey",
+        "keys": ["alt", "tab"]
+    },
+    "right_wink+mouth_open": {
+        "action": "hotkey",
+        "keys": ["ctrl", "a"]
+    },
+    "head_tilt_left": {
+        "action": "press",
+        "keys": ["prevtrack"]
+    },
+    "head_tilt_right": {
+        "action": "press",
+        "keys": ["nexttrack"]
+    },
+    "head_tilt_left+mouth_open": {
+        "action": "press",
+        "keys": ["left"]
+    },
+    "head_tilt_right+mouth_open": {
+        "action": "press",
+        "keys": ["right"]
+    }
+}

@@ -10,6 +10,41 @@ from math import hypot, atan2, degrees
 from datetime import datetime
 import threading
 import screen_brightness_control as sbc
+import tkinter as tk
+
+class PrivacyShield:
+    def __init__(self):
+        self.root = None
+        self.is_active = False
+
+    def _create_shield(self):
+        self.root = tk.Tk()
+        self.root.attributes("-fullscreen", True)
+        self.root.attributes("-topmost", True)
+        self.root.configure(bg="black")
+        self.root.config(cursor="none")
+        
+        label = tk.Label(self.root, text="[T.O.M.M.Y. BIOMETRIC SHIELD ENGAGED]", font=("Courier New", 30, "bold"), fg="#00ff41", bg="black")
+        label.pack(expand=True)
+        sub = tk.Label(self.root, text="Awaiting FaceMesh Reconnaissance...", font=("Courier New", 15), fg="#8b949e", bg="black")
+        sub.pack(pady=20)
+        
+        self.root.protocol("WM_DELETE_WINDOW", lambda: None)
+        self.root.mainloop()
+
+    def enable(self):
+        if not self.is_active:
+            self.is_active = True
+            threading.Thread(target=self._create_shield, daemon=True).start()
+
+    def disable(self):
+        if self.is_active:
+            self.is_active = False
+            if self.root:
+                try:
+                    self.root.after(0, self.root.destroy)
+                except: pass
+                self.root = None
 
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0 # DELETES PYAUTOGUI's NATIVE 100ms THREAD-BLOCKING SLEEP (Core fix for "Lag")
@@ -87,6 +122,17 @@ def run_vision_engine():
     cam_w, cam_h = 1280, 720
     cap.set(3, cam_w)
     cap.set(4, cam_h)
+    
+    # --- MACROS & SHIELD ENGINE ---
+    MACROS_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "macros.json")
+    def load_macros():
+        try:
+            with open(MACROS_FILE, "r") as f: return json.load(f)
+        except: return {}
+    
+    macros = load_macros()
+    shield = PrivacyShield()
+    last_face_time = time.time()
     
     # --- PHYSICAL WORLD SNAPSHOT TIMER ---
     last_snapshot_time = 0.0
@@ -336,6 +382,9 @@ def run_vision_engine():
 
             results = face_mesh.process(imgRGB)
             if results.multi_face_landmarks:
+                last_face_time = current_time
+                shield.disable()
+
                 landmarks = results.multi_face_landmarks[0].landmark
                 # --- Cursor Control (Nose Pointing stabilization) ---
                 nose_tip = landmarks[1]
@@ -383,28 +432,31 @@ def run_vision_engine():
                 dx, dy = landmarks[263].x - landmarks[33].x, landmarks[263].y - landmarks[33].y
                 head_roll = degrees(atan2(dy, dx))
 
+                # --- MACRO ENGINE (Dynamic Face Combos) ---
                 if current_time - last_gesture_time > 1.0:
-                    if head_roll > 10:  # Tilt Right
-                        if mouth_open:
-                            pyautogui.press('right')  # Skip forward
-                        else:
-                            pyautogui.press('nexttrack')  # Next track
-                        last_gesture_time = current_time
-                    elif head_roll < -10:  # Tilt Left
-                        if mouth_open:
-                            pyautogui.press('left')   # Skip backward
-                        else:
-                            pyautogui.press('prevtrack')  # Prev track
-                        last_gesture_time = current_time
+                    state_tokens = []
+                    
+                    if head_roll > 10: state_tokens.append("head_tilt_right")
+                    elif head_roll < -10: state_tokens.append("head_tilt_left")
+                    
+                    if left_closed and not both_closed: state_tokens.append("left_wink")
+                    elif right_closed and not both_closed: state_tokens.append("right_wink")
+                    
+                    if mouth_open: state_tokens.append("mouth_open")
+                    
+                    if state_tokens:
+                        state_str = "+".join(state_tokens)
                         
-                    if left_closed and not both_closed:
-                        if mouth_open: pyautogui.hotkey('alt', 'tab')
-                        else: pyautogui.hotkey('ctrl', 'c')
-                        last_gesture_time = current_time
-                    elif right_closed and not both_closed:
-                        if mouth_open: pyautogui.hotkey('ctrl', 'a')
-                        else: pyautogui.hotkey('ctrl', 'v')
-                        last_gesture_time = current_time
+                        if state_str in macros:
+                            action = macros[state_str]
+                            if action["action"] == "hotkey":
+                                pyautogui.hotkey(*action["keys"])
+                            elif action["action"] == "press":
+                                pyautogui.press(action["keys"][0])
+                            
+                            last_gesture_time = current_time
+                            cv2.putText(img, f"MACRO: {state_str}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 3)
+                
                 
                 if both_closed and not eyes_closed and current_time - last_gesture_time > 0.1: 
                     eyes_closed = True
@@ -453,6 +505,10 @@ def run_vision_engine():
                             if mouth_open: pyautogui.press('volumedown')
                             else: pyautogui.scroll(-SCROLL_AMOUNT)
                             last_scroll_time = current_time
+            else:
+                # No face detected
+                if current_time - last_face_time > 3.0:
+                    shield.enable()
 
                 cv2.putText(img, "NOSE TRACKING ACTIVE (EYE CLICKS)", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
                 if eye_drag_mode: cv2.putText(img, "[DRAGGING]", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
