@@ -124,10 +124,65 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================================================================
-# GLITCH TITLE
+# GLITCH TITLE & TELEMETRIC CANVAS
 # =========================================================================
 st.markdown('<div class="glitch-wrapper"><div class="glitch" data-text="T.O.M.M.Y.">T.O.M.M.Y.</div></div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-glitch">TACTILE . OPTICAL . MULTIMODAL . MACHINE . YIELD</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-glitch">TELEMETRIC . OPTICAL & MULTIMODAL . MACHINE . YIELD</div>', unsafe_allow_html=True)
+
+components.html("""
+    <canvas id="telemetricCanvas" style="width: 100%; height: 150px; display: block; margin-top: -30px;"></canvas>
+    <script>
+        const canvas = document.getElementById('telemetricCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = 150;
+        
+        let nodes = [];
+        for (let i = 0; i < 40; i++) {
+            nodes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                radius: Math.random() * 2 + 1
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "rgba(0, 255, 65, 0.15)";
+            ctx.fillStyle = "#00ff41";
+            
+            for (let i = 0; i < nodes.length; i++) {
+                let node = nodes[i];
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+                if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+                
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                for (let j = i + 1; j < nodes.length; j++) {
+                    let dx = nodes[j].x - node.x;
+                    let dy = nodes[j].y - node.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 80) {
+                        ctx.beginPath();
+                        ctx.moveTo(node.x, node.y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        animate();
+    </script>
+""", height=150)
 
 # =========================================================================
 # TERMINAL BOOT SEQUENCE (HTML/JS INJECTION)
