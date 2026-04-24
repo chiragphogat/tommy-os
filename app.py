@@ -1,149 +1,125 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import base64
 
 st.set_page_config(
-    page_title="T.O.M.M.Y. OS | Kernel",
+    page_title="T.O.M.M.Y. OS",
     page_icon="👁️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # =========================================================================
-# GLOBAL CSS INJECTION (CYBERPUNK / SCI-FI THEME)
+# GLOBAL CSS INJECTION (PRODUCT LAUNCH THEME)
 # =========================================================================
 st.markdown("""
     <style>
-        /* Base Cyberpunk Theme */
         .stApp {
             background-color: #050505;
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
+            color: #e6e6e6;
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
         }
         
-        /* Hide Streamlit elements */
-        header {visibility: hidden;}
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
+        header, #MainMenu, footer { visibility: hidden; }
+        .block-container { padding-top: 1rem; max-width: 1400px; }
         
-        /* Glitch Title Effect */
-        .glitch-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 2rem;
-            margin-bottom: 0;
-        }
-        .glitch {
-            font-size: 6rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            position: relative;
-            text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.025em -0.05em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75);
-            animation: glitch 500ms infinite;
-            color: #fff;
-            letter-spacing: 5px;
-        }
-        @keyframes glitch {
-            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75); }
-            14% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75); }
-            15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75); }
-            49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75); }
-            50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75); }
-            99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75); }
-            100% { text-shadow: -0.025em 0 0 rgba(255,0,0,0.75), -0.025em -0.025em 0 rgba(0,255,0,0.75), -0.025em -0.05em 0 rgba(0,0,255,0.75); }
+        /* Typography */
+        h1, h2, h3 { font-family: 'Courier New', monospace; font-weight: 900; text-transform: uppercase; margin-bottom: 0; }
+        .gradient-text {
+            background: linear-gradient(90deg, #00ff41, #008f11);
+            -webkit-background-clip: text;
+            color: transparent;
         }
         
-        .sub-glitch {
-            text-align: center;
-            color: #0ff;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            margin-bottom: 2rem;
-            text-shadow: 0 0 10px #0ff;
-        }
-
-        /* Neon Holographic Cards */
-        .holo-card {
-            background: rgba(0, 20, 10, 0.6);
-            border: 1px solid #00ff41;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2), inset 0 0 20px rgba(0, 255, 65, 0.1);
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            transform-style: preserve-3d;
-        }
-        .holo-card:hover {
-            transform: perspective(1000px) translateZ(20px) rotateX(2deg) rotateY(2deg);
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.5), inset 0 0 30px rgba(0, 255, 65, 0.2);
-            border-color: #fff;
-        }
-        .holo-card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(0, 255, 65, 0.3), transparent);
-            transform: skewX(-20deg);
-            transition: 0.5s;
-        }
-        .holo-card:hover::before { left: 200%; }
-
-        /* Neon Headers inside cards */
-        .holo-card h3 {
-            color: #0ff;
-            text-transform: uppercase;
-            border-bottom: 1px solid #0ff;
-            padding-bottom: 5px;
-            text-shadow: 0 0 5px #0ff;
-        }
-        
-        /* Custom Streamlit Tabs */
-        .stTabs [data-baseweb="tab-list"] { gap: 1rem; background-color: transparent; }
-        .stTabs [data-baseweb="tab"] { 
+        /* Hero Button */
+        .hero-btn-container { text-align: center; margin-top: 2rem; margin-bottom: 5rem; }
+        .hero-btn {
             background: transparent;
-            border: 1px solid #00ff41;
+            border: 2px solid #00ff41;
             color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            border-radius: 0;
-            padding: 10px 20px;
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-decoration: none;
             text-transform: uppercase;
-            box-shadow: 0 0 5px rgba(0,255,65,0.2);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            display: inline-block;
         }
-        .stTabs [aria-selected="true"] { 
-            background-color: #00ff41 !important;
-            color: #000 !important;
-            box-shadow: 0 0 15px rgba(0,255,65,0.8);
-            font-weight: 900;
+        .hero-btn:hover {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
+            transform: scale(1.05);
         }
-        
-        hr { border-color: rgba(0, 255, 65, 0.3); }
-        p, li { font-size: 1.1rem; line-height: 1.6; }
+
+        /* Cinematic Feature Section */
+        .feature-section {
+            padding: 80px 20px;
+            margin: 40px 0;
+            border-top: 1px solid rgba(0, 255, 65, 0.2);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            background: linear-gradient(180deg, rgba(0,255,65,0.02) 0%, rgba(0,0,0,0) 100%);
+            display: flex;
+            align-items: center;
+        }
+        .feature-title { font-size: 3rem; color: #fff; letter-spacing: 2px; }
+        .feature-desc { font-size: 1.2rem; color: #8b949e; line-height: 1.8; margin-top: 20px; max-width: 600px; }
+
+        /* Footer */
+        .academic-footer {
+            background: #0a0a0a;
+            border-top: 2px solid #222;
+            padding: 60px 20px;
+            margin-top: 100px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 # =========================================================================
-# GLITCH TITLE & TELEMETRIC CANVAS
+# HERO SECTION (THE HOOK)
 # =========================================================================
-st.markdown('<div class="glitch-wrapper"><div class="glitch" data-text="T.O.M.M.Y.">T.O.M.M.Y.</div></div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-glitch">TELEMETRIC . OPTICAL & MULTIMODAL . MACHINE . YIELD</div>', unsafe_allow_html=True)
+# Glitch Title
+st.markdown("""
+    <style>
+        .glitch-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 5rem; }
+        .glitch {
+            font-size: 7rem; font-weight: 900; text-transform: uppercase; position: relative; color: #fff; letter-spacing: 10px; font-family: 'Courier New', monospace;
+            text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.025em -0.05em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75);
+            animation: glitch 500ms infinite;
+        }
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75); }
+            20% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75); }
+            40% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75); }
+            60% { text-shadow: -0.025em 0 0 rgba(255,0,0,0.75), -0.025em -0.025em 0 rgba(0,255,0,0.75), -0.025em -0.05em 0 rgba(0,0,255,0.75); }
+            80% { text-shadow: 0.05em -0.05em 0 rgba(255,0,0,0.75), 0.025em 0.05em 0 rgba(0,255,0,0.75), -0.05em -0.025em 0 rgba(0,0,255,0.75); }
+            100% { text-shadow: -0.025em 0.05em 0 rgba(255,0,0,0.75), -0.05em -0.05em 0 rgba(0,255,0,0.75), 0.025em 0 0 rgba(0,0,255,0.75); }
+        }
+        .sub-glitch { text-align: center; color: #00ff41; font-size: 1.2rem; letter-spacing: 4px; margin-bottom: 2rem; font-family: 'Courier New', monospace; text-shadow: 0 0 10px #00ff41; }
+    </style>
+    <div class="glitch-wrapper"><div class="glitch" data-text="T.O.M.M.Y.">T.O.M.M.Y.</div></div>
+    <div class="sub-glitch">TELEMETRIC . OPTICAL & MULTIMODAL . MACHINE . YIELD</div>
+""", unsafe_allow_html=True)
 
+# Interactive Telemetric Canvas
 components.html("""
-    <canvas id="telemetricCanvas" style="width: 100%; height: 150px; display: block; margin-top: -30px;"></canvas>
+    <canvas id="telemetricCanvas" style="width: 100%; height: 200px; display: block; margin-top: -30px;"></canvas>
     <script>
         const canvas = document.getElementById('telemetricCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
-        canvas.height = 150;
+        canvas.height = 200;
         
         let nodes = [];
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 60; i++) {
             nodes.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 2,
-                vy: (Math.random() - 0.5) * 2,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
                 radius: Math.random() * 2 + 1
             });
         }
@@ -151,7 +127,7 @@ components.html("""
         function animate() {
             requestAnimationFrame(animate);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "rgba(0, 255, 65, 0.15)";
+            ctx.strokeStyle = "rgba(0, 255, 65, 0.2)";
             ctx.fillStyle = "#00ff41";
             
             for (let i = 0; i < nodes.length; i++) {
@@ -170,8 +146,7 @@ components.html("""
                     let dx = nodes[j].x - node.x;
                     let dy = nodes[j].y - node.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 80) {
+                    if (dist < 100) {
                         ctx.beginPath();
                         ctx.moveTo(node.x, node.y);
                         ctx.lineTo(nodes[j].x, nodes[j].y);
@@ -182,204 +157,184 @@ components.html("""
         }
         animate();
     </script>
-""", height=150)
+""", height=200)
 
-# =========================================================================
-# TERMINAL BOOT SEQUENCE (HTML/JS INJECTION)
-# =========================================================================
-components.html("""
-    <div id="terminal" style="
-        background-color: #000; 
-        color: #00ff41; 
-        font-family: 'Courier New', monospace; 
-        padding: 20px; 
-        border: 2px solid #00ff41; 
-        border-radius: 5px;
-        box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
-        height: 250px; 
-        overflow-y: hidden;
-        position: relative;
-    ">
-        <div id="output"></div>
-        <span id="cursor" style="animation: blink 1s step-end infinite;">█</span>
+# Hero CTA & Live Metrics
+st.markdown("""
+    <div class="hero-btn-container">
+        <a href="https://github.com/chiragphogat/tommy-os" target="_blank" class="hero-btn">>_ INITIALIZE DEPLOYMENT KERNEL</a>
     </div>
-
-    <style>
-        @keyframes blink { 50% { opacity: 0; } }
-        ::selection { background: #00ff41; color: #000; }
-    </style>
-
-    <script>
-        const lines = [
-            "> INITIALIZING KERNEL BOOT SEQUENCE...",
-            "> MEMORY ISOLATION... [SUCCESS]",
-            "> BYPASSING CLOUD APIs... [SUCCESS]",
-            "> SECURING LOCAL IPC BRIDGES... [LOCKED]",
-            "> INJECTING FACEMESH XNNPACK WORKERS... [ACTIVE]",
-            "> WAKING DETERMINISTIC NLP DAEMON (spaCy)... [ACTIVE]",
-            "> CALIBRATING 18ms VISION MATRICES...",
-            "> ",
-            "> SYSTEM ONLINE. WELCOME TO THE FUTURE OF OS CONTROL."
-        ];
-        
-        let lineIndex = 0;
-        let charIndex = 0;
-        const output = document.getElementById("output");
-        
-        function typeWriter() {
-            if (lineIndex < lines.length) {
-                if (charIndex < lines[lineIndex].length) {
-                    output.innerHTML += lines[lineIndex].charAt(charIndex);
-                    charIndex++;
-                    setTimeout(typeWriter, Math.random() * 30 + 10);
-                } else {
-                    output.innerHTML += "<br>";
-                    lineIndex++;
-                    charIndex = 0;
-                    setTimeout(typeWriter, 400);
-                }
-            } else {
-                document.getElementById("terminal").style.boxShadow = "0 0 40px rgba(0, 255, 65, 0.8)";
-            }
-        }
-        
-        setTimeout(typeWriter, 1000);
-    </script>
-""", height=280)
-
-
-# =========================================================================
-# LIVE STREAMER (FAKE METRICS)
-# =========================================================================
-components.html("""
-    <div style="display: flex; justify-content: space-between; text-align: center; font-family: 'Courier New', monospace; margin-top: 10px;">
-        <div style="flex: 1; border: 1px solid #0ff; margin: 5px; padding: 15px; background: rgba(0, 255, 255, 0.1); box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);">
-            <div style="color: #0ff; font-size: 0.8rem; text-transform: uppercase;">XNNPACK Frame Latency</div>
-            <div style="color: #fff; font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 10px #fff;" id="metric1">18ms</div>
-        </div>
-        <div style="flex: 1; border: 1px solid #f0f; margin: 5px; padding: 15px; background: rgba(255, 0, 255, 0.1); box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);">
-            <div style="color: #f0f; font-size: 0.8rem; text-transform: uppercase;">IPC Sync Rate</div>
-            <div style="color: #fff; font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 10px #fff;" id="metric2">60 FPS</div>
-        </div>
-        <div style="flex: 1; border: 1px solid #ff0; margin: 5px; padding: 15px; background: rgba(255, 255, 0, 0.1); box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);">
-            <div style="color: #ff0; font-size: 0.8rem; text-transform: uppercase;">Cloud Dependencies</div>
-            <div style="color: #fff; font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 10px #fff;">0.0%</div>
-        </div>
+    
+    <div style="display: flex; justify-content: center; gap: 40px; text-align: center; font-family: 'Courier New', monospace; margin-bottom: 50px;">
+        <div><div style="color: #8b949e; font-size: 0.9rem;">VISION LATENCY</div><div style="color: #fff; font-size: 2.5rem; font-weight: 900;">18<span style="color:#00ff41; font-size:1.5rem;">ms</span></div></div>
+        <div><div style="color: #8b949e; font-size: 0.9rem;">CLOUD APIs</div><div style="color: #fff; font-size: 2.5rem; font-weight: 900;">0<span style="color:#00ff41; font-size:1.5rem;">.0%</span></div></div>
+        <div><div style="color: #8b949e; font-size: 0.9rem;">IPC BRIDGE</div><div style="color: #fff; font-size: 2.5rem; font-weight: 900;">60<span style="color:#00ff41; font-size:1.5rem;">FPS</span></div></div>
     </div>
-    <script>
-        setInterval(() => {
-            document.getElementById('metric1').innerText = (17 + Math.random() * 2).toFixed(1) + 'ms';
-            document.getElementById('metric2').innerText = (59 + Math.random() * 2).toFixed(1) + ' FPS';
-        }, 800);
-    </script>
-""", height=120)
+""", unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================================
-# TABS
+# PRODUCT FEATURE 1: THE TELEMETRIC ENGINE
 # =========================================================================
-tab1, tab2, tab3 = st.tabs(["[ 01_CORE_ARCHITECTURE ]", "[ 02_DEPLOYMENT_PROTOCOLS ]", "[ 03_ACADEMIC_ARCHIVES ]"])
+st.markdown('<div class="feature-section">', unsafe_allow_html=True)
+col1, col2 = st.columns([1.2, 1])
 
-with tab1:
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("""
-        <div class="holo-card">
-            <h3>👁️ Vision-First Matrix</h3>
-            <p>T.O.M.M.Y. maps raw Euclidean geometry directly to your hardware kernel. We completely decoupled spatial X/Y movement from the pupils to the <b>Nose Tip (FaceMesh Node 1)</b> to physically eradicate biological micro-jitter.</p>
-            <ul>
-                <li><b>Left Click:</b> 1 Fast Blink</li>
-                <li><b>Right Click:</b> 2 Fast Blinks</li>
-                <li><b>Close Window:</b> 3 Fast Blinks</li>
-                <li><b>Head Roll:</b> Next/Prev Media Track</li>
-            </ul>
-            <p style="color: #F85149; font-size: 0.9rem;"><i>> All destructive commands are guarded by a physical Jaw-Drop (MAR) logic gate to prevent accidental actuation.</i></p>
-        </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown("""
-        <div class="holo-card">
-            <h3>🗣️ Offline NLP Substructure</h3>
-            <p>LLMs are banned. Waiting 2,000ms for an internet server to process a simple "mute volume" request is a catastrophic failure in OS design.</p>
-            <p>We utilize the <b>spaCy</b> deterministic engine isolated entirely on a separate CPU core. It intercepts raw phoneme inputs via Porcupine, parses the intent vector locally, and fires direct WMI commands asynchronously.</p>
-            <p style="color: #0ff;"><i>> Result: 14ms Voice Inference with zero ping.</i></p>
-        </div>
-        """, unsafe_allow_html=True)
-
+with col1:
+    st.markdown('<div class="feature-title">THE <span class="gradient-text">TELEMETRIC</span> ENGINE.</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="holo-card" style="border-color: #f0f; box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);">
-        <h3 style="color: #f0f; border-color: #f0f;">🧩 The Memory Wall (IPC JSON Bridging)</h3>
-        <p>Python's Global Interpreter Lock (GIL) is notoriously fatal for multimodal concurrency. Attempting to run a camera loop and a text-to-speech engine simultaneously causes total frame death.</p>
-        <p>We solved this by launching <code>vision_engine.py</code> and <code>voice_engine.py</code> as completely detached background daemons. They never share memory. Instead, they communicate perfectly at 60 FPS across an encrypted <code>.tommy_state.json</code> high-speed bridge.</p>
-    </div>
+        <div class="feature-desc">
+            We bypassed standard 2D tracking. T.O.M.M.Y. locks an invisible Euclidean grid directly to your facial structure. 
+            By locking the mouse cursor directly to <b>FaceMesh Node 1 (The Nose)</b>, the engine entirely eradicates the biological micro-jitter found in hand-tracking.
+            <br><br>
+            <b>Hardware Triggers:</b><br>
+            <span style="color:#00ff41;">></span> 1 Blink: Left Click<br>
+            <span style="color:#00ff41;">></span> 2 Blinks: Right Click<br>
+            <span style="color:#00ff41;">></span> 3 Blinks: Close Window<br>
+            <span style="color:#00ff41;">></span> Jaw Drop: Physical Modifier Gate (Alt/Shift)
+        </div>
     """, unsafe_allow_html=True)
 
-
-with tab2:
-    col_a, col_b = st.columns([1, 1])
-    with col_a:
-        st.markdown("""
-        <div class="holo-card">
-            <h3>🚀 Automated PowerShell Sandbox</h3>
-            <p>We engineered T.O.M.M.Y. to infect your machine cleanly, without polluting your global PATH variables. The <code>setup.bat</code> payload handles everything automatically.</p>
-            <ol>
-                <li><b>Containerization:</b> Spins up a localized Python <code>venv</code> block.</li>
-                <li><b>Payload Injection:</b> Downloads MediaPipe frameworks, acoustic models, and NLP syntax offline.</li>
-                <li><b>Execution Handoff:</b> Spawns an elevated PowerShell terminal natively locked into the active environment. Just press Enter to boot.</li>
-            </ol>
+with col2:
+    # CSS Radar Scanner Animation
+    components.html("""
+        <style>
+            .radar { position: relative; width: 300px; height: 300px; border-radius: 50%; border: 2px solid #00ff41; margin: 0 auto; overflow: hidden; box-shadow: 0 0 30px rgba(0,255,65,0.2); }
+            .radar::after { content: ''; position: absolute; width: 150px; height: 150px; background: linear-gradient(45deg, rgba(0,255,65,0.8) 0%, transparent 50%); transform-origin: bottom right; top: 0; left: 0; animation: scan 2s linear infinite; }
+            .radar::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, transparent 40%, rgba(0,255,65,0.1) 100%); }
+            .grid { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px); background-size: 30px 30px; opacity: 0.15; }
+            .target { position: absolute; width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff; top: 40%; left: 60%; animation: pulse 1s infinite; }
+            @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+        </style>
+        <div class="radar">
+            <div class="grid"></div>
+            <div class="target"></div>
         </div>
-        """, unsafe_allow_html=True)
-    with col_b:
-        st.markdown("""
-        <div class="holo-card" style="background: #000; border-color: #0ff;">
-            <h3 style="color:#0ff; border-color: #0ff;">>_ TERMINAL</h3>
-            <p style="font-family: 'Courier New', monospace; color: #0ff; font-size: 0.9rem;">
-            C:\\> git clone https://github.com/chiragphogat/tommy-os.git<br>
-            C:\\> cd tommy-os<br>
-            C:\\tommy-os> .\\setup.bat<br>
-            <br>
-            <span style="color: #8b949e;"># System automatically bridges to PowerShell...</span><br>
-            PS C:\\tommy-os> python tommy_os.py
+    """, height=350)
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# =========================================================================
+# PRODUCT FEATURE 2: OFFLINE VOICE CORE
+# =========================================================================
+st.markdown('<div class="feature-section" style="background: #020202;">', unsafe_allow_html=True)
+col3, col4 = st.columns([1, 1.2])
+
+with col3:
+    # CSS Soundwave Animation
+    components.html("""
+        <style>
+            .wave-container { display: flex; align-items: center; justify-content: center; height: 300px; gap: 5px; }
+            .bar { width: 15px; background: #00ff41; border-radius: 10px; animation: sound 0ms -800ms linear infinite alternate; box-shadow: 0 0 15px #00ff41; }
+            @keyframes sound { 0% { height: 10px; opacity: 0.3; } 100% { height: 150px; opacity: 1; } }
+            .bar:nth-child(1)  { animation-duration: 474ms; }
+            .bar:nth-child(2)  { animation-duration: 433ms; }
+            .bar:nth-child(3)  { animation-duration: 407ms; }
+            .bar:nth-child(4)  { animation-duration: 458ms; }
+            .bar:nth-child(5)  { animation-duration: 400ms; }
+            .bar:nth-child(6)  { animation-duration: 427ms; }
+            .bar:nth-child(7)  { animation-duration: 441ms; }
+            .bar:nth-child(8)  { animation-duration: 419ms; }
+            .bar:nth-child(9)  { animation-duration: 487ms; }
+            .bar:nth-child(10) { animation-duration: 442ms; }
+        </style>
+        <div class="wave-container">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+    """, height=350)
+
+with col4:
+    st.markdown('<div class="feature-title">DETERMINISTIC <span class="gradient-text">VOICE</span> ISOLATION.</div>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="feature-desc">
+            LLMs are banned from the logic loop. Waiting 2,000ms for a cloud server to "generate" an API response just to mute your volume is a catastrophic failure in OS design.
+            <br><br>
+            T.O.M.M.Y. rips out heavy Generative AI and replaces it with strict, deterministic syntactic parsing using the <b>spaCy</b> grammar engine. It runs locally, offline, parsing human intent instantly and firing native WMI kernel commands at lightning speeds.
+        </div>
+    """, unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# =========================================================================
+# PRODUCT FEATURE 3: DEPLOYMENT TERMINAL
+# =========================================================================
+st.markdown('<div style="text-align:center; margin-top: 80px;"><h2 style="font-size: 2.5rem;">>_ INJECTING THE SANDBOX</h2></div>', unsafe_allow_html=True)
+st.markdown("""
+    <p style="text-align:center; color:#8b949e; max-width:800px; margin: 0 auto 40px auto; font-size:1.1rem;">
+        Engineered to deploy cleanly without polluting your Windows PATH. 
+        The <code>setup.bat</code> payload spins up an isolated <code>venv</code>, downloads all visual MediaPipe models, and hands execution off to an elevated PowerShell terminal natively.
+    </p>
+""", unsafe_allow_html=True)
+
+# Fake Terminal Block
+components.html("""
+    <div style="background: #010409; border: 1px solid #30363d; border-radius: 8px; width: 60%; margin: 0 auto; font-family: 'Courier New', monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;">
+        <div style="background: #161b22; padding: 10px; border-bottom: 1px solid #30363d; display: flex; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+        </div>
+        <div style="padding: 20px; color: #fff; font-size: 1.1rem; line-height: 1.6;">
+            <span style="color:#00ff41;">C:\\Windows\\System32></span> git clone https://github.com/chiragphogat/tommy-os.git<br>
+            <span style="color:#00ff41;">C:\\Windows\\System32></span> cd tommy-os<br>
+            <span style="color:#00ff41;">C:\\tommy-os></span> .\\setup.bat<br>
+            <span style="color:#8b949e;">[+] Building Virtual Sandbox... DONE</span><br>
+            <span style="color:#8b949e;">[+] Initializing spaCy Models... DONE</span><br>
+            <span style="color:#8b949e;">[+] Bypassing Execution Policies... DONE</span><br>
+            <span style="color:#3fb950; font-weight:bold;">PS C:\\tommy-os></span> python tommy_os.py<span style="animation: blink 1s infinite;">_</span>
+        </div>
+    </div>
+    <style>@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }</style>
+""", height=350)
+
+
+# =========================================================================
+# ACADEMIC FOOTER
+# =========================================================================
+st.markdown('<div class="academic-footer">', unsafe_allow_html=True)
+st.markdown("<h3 style='text-align:center; color:#58a6ff;'>// ACADEMIC RESOURCES</h3>", unsafe_allow_html=True)
+
+col_f1, col_f2 = st.columns([1, 1])
+with col_f1:
+    st.markdown("""
+        <div style="background: #161b22; border: 1px solid #30363d; padding: 30px; border-radius: 8px;">
+            <h4 style="color:#fff;">A Multi-Process Architecture for Hands-Free Windows Navigation</h4>
+            <p style="color:#8b949e; font-size: 0.9rem;">
+                Even now, computers keep us at our desks. We made T.O.M.M.Y. to fix this. It is a native wrapper that uses a regular webcam to take over Windows. 
+                By dividing the workload into separate background processes that talk through a JSON bridge, we dodged Python's GIL constraints completely.
             </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-
-with tab3:
-    st.markdown("""
-    <div class="holo-card" style="border-color: #ff0; box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);">
-        <h3 style="color: #ff0; border-color: #ff0;">📄 IEEE RESEARCH MANUSCRIPT</h3>
-        <p><b>Title:</b> A Multi-Process Architecture for Hands-Free Windows Navigation Without Cloud Dependencies</p>
-        <p style="color: #8b949e; font-style: italic;">Abstract — Even now, computers keep us at our desks with keyboards and mice. Voice assistants exist, but if you ask one to drag and drop a file, it crashes. We made T.O.M.M.Y. to fix this. It is a native wrapper that uses a regular webcam to take over Windows. By dividing the workload into separate background processes that talk through a JSON bridge, we dodged Python's GIL constraints. The final kernel runs perfectly at 60 FPS, with interactions occurring natively in under 20 milliseconds.</p>
-    </div>
     """, unsafe_allow_html=True)
-    
-    col_dl, _ = st.columns([1, 2])
-    with col_dl:
-        try:
-            with open("assets/T.O.M.M.Y_Research.pdf", "rb") as pdf_file:
-                st.download_button(
-                    label="[ INITIATE SECURE DOWNLOAD: PDF ]",
-                    data=pdf_file,
-                    file_name="TOMMY_Research_Paper.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-        except FileNotFoundError:
-            st.error("⚠️ [ERROR: 404] Research PDF missing from /assets/ directory.")
+    try:
+        with open("assets/T.O.M.M.Y_Research.pdf", "rb") as pdf_file:
+            st.download_button(
+                label="📥 DOWNLOAD IEEE RESEARCH MANUSCRIPT",
+                data=pdf_file,
+                file_name="TOMMY_Research_Paper.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+    except FileNotFoundError:
+        st.error("⚠️ PDF Not Compiled in /assets/")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<br><hr>", unsafe_allow_html=True)
-    st.markdown("<h4 style='text-align:center; color:#0ff;'>[ ARCHITECTS ]</h4>", unsafe_allow_html=True)
-    
-    tc1, tc2, tc3, tc4 = st.columns(4)
-    with tc1:
-        st.markdown("<div style='text-align:center; border: 1px solid #30363d; padding: 10px; background: #111;'><b>Chirag Phogat</b><br><span style='color:#0ff; font-size:0.8rem;'>Lead Systems Architect</span></div>", unsafe_allow_html=True)
-    with tc2:
-        st.markdown("<div style='text-align:center; border: 1px solid #30363d; padding: 10px; background: #111;'><b>Chava Harshavardhan</b><br><span style='color:#0ff; font-size:0.8rem;'>Gaze Estimation Math</span></div>", unsafe_allow_html=True)
-    with tc3:
-        st.markdown("<div style='text-align:center; border: 1px solid #30363d; padding: 10px; background: #111;'><b>Lalmalsawm Guite</b><br><span style='color:#0ff; font-size:0.8rem;'>Lead Researcher</span></div>", unsafe_allow_html=True)
-    with tc4:
-        st.markdown("<div style='text-align:center; border: 1px solid #30363d; padding: 10px; background: #111;'><b>Kaushal Pathak</b><br><span style='color:#0ff; font-size:0.8rem;'>Project Mentor</span></div>", unsafe_allow_html=True)
-    
-    st.markdown("<br><center><p style='color:#30363d; font-size: 0.8rem;'>© 2026 LOVELY PROFESSIONAL UNIVERSITY. ALL SYSTEMS NOMINAL.</p></center>", unsafe_allow_html=True)
+with col_f2:
+    st.markdown("""
+        <div style="background: #161b22; border: 1px solid #30363d; padding: 30px; border-radius: 8px; height: 100%;">
+            <h4 style="color:#fff;">SYSTEM ARCHITECTS</h4>
+            <p style="color:#8b949e; font-size: 0.9rem;">Engineered at Lovely Professional University.</p>
+            <ul style="color:#c9d1d9; list-style-type: none; padding-left: 0;">
+                <li style="margin-bottom: 10px;"><b>Chirag Phogat</b> - Lead Systems Architecture</li>
+                <li style="margin-bottom: 10px;"><b>Chava Harshavardhan</b> - Gaze Estimation Math</li>
+                <li style="margin-bottom: 10px;"><b>Lalmalsawm Guite</b> - Lead Researcher</li>
+                <li style="margin-bottom: 10px;"><b>Kaushal Pathak</b> - Project Mentor</li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+    <div style="text-align: center; margin-top: 50px; color: #484f58; font-family: 'Courier New', monospace; font-size: 0.8rem;">
+        © 2026 T.O.M.M.Y. OS PLATFORM. ALL SYSTEMS NOMINAL.
+    </div>
+</div>
+""", unsafe_allow_html=True)
