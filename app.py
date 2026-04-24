@@ -9,12 +9,12 @@ st.set_page_config(
 )
 
 # =========================================================================
-# GLOBAL CSS INJECTION (SMOOTH CINEMATIC SCROLL)
+# GLOBAL CSS INJECTION (CINEMATIC FADES & SCROLL)
 # =========================================================================
 st.markdown("""
     <style>
         .stApp {
-            background-color: #020202;
+            background-color: #010203;
             color: #e6e6e6;
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
@@ -26,182 +26,237 @@ st.markdown("""
         h1, h2, h3 { font-family: 'Courier New', monospace; font-weight: 900; text-transform: uppercase; margin-bottom: 0; }
         .gradient-text { background: linear-gradient(90deg, #00ff41, #008f11); -webkit-background-clip: text; color: transparent; }
         
+        /* Cinematic Fade Up Animation */
         .cinematic-section {
             padding: 60px 20px;
             margin: 40px 0;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.05);
             position: relative;
+            animation: fadeUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(60px); filter: blur(5px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
     </style>
 """, unsafe_allow_html=True)
 
 
 # =========================================================================
-# SECTION 1: HERO & METRICS (FIXED HTML PARSING)
+# SECTION 1: MATRIX HERO & METRICS
 # =========================================================================
 components.html("""
     <style>
-        .hero-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; }
-        .glitch { font-size: 8rem; font-weight: 900; text-transform: uppercase; position: relative; color: #fff; letter-spacing: 12px; font-family: 'Courier New', monospace; text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.025em -0.05em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75); animation: glitch 500ms infinite; margin: 0; }
+        body { margin: 0; padding: 0; background: #010203; overflow: hidden; font-family: 'Courier New', monospace;}
+        .hero-container { position: relative; width: 100%; height: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; }
+        .content { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; }
+        .glitch { font-size: 8rem; font-weight: 900; text-transform: uppercase; color: #fff; letter-spacing: 12px; text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.025em -0.05em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75); animation: glitch 500ms infinite; margin: 0; }
         @keyframes glitch { 0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75); } 20% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75); } 40% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75); } 60% { text-shadow: -0.025em 0 0 rgba(255,0,0,0.75), -0.025em -0.025em 0 rgba(0,255,0,0.75), -0.025em -0.05em 0 rgba(0,0,255,0.75); } 80% { text-shadow: 0.05em -0.05em 0 rgba(255,0,0,0.75), 0.025em 0.05em 0 rgba(0,255,0,0.75), -0.05em -0.025em 0 rgba(0,0,255,0.75); } 100% { text-shadow: -0.025em 0.05em 0 rgba(255,0,0,0.75), -0.05em -0.05em 0 rgba(0,255,0,0.75), 0.025em 0 0 rgba(0,0,255,0.75); } }
-        .sub-glitch { text-align: center; color: #00ff41; font-size: 1.5rem; letter-spacing: 5px; margin-top: 10px; font-family: 'Courier New', monospace; text-shadow: 0 0 15px #00ff41; }
-        .metrics-row { display: flex; justify-content: center; gap: 80px; text-align: center; font-family: 'Courier New', monospace; margin-top: 60px; }
+        .sub-glitch { color: #00ff41; font-size: 1.5rem; letter-spacing: 5px; margin-top: 10px; text-shadow: 0 0 15px #00ff41; }
+        .metrics-row { display: flex; justify-content: center; gap: 80px; text-align: center; margin-top: 60px; }
         .metric-label { color: #8b949e; font-size: 1rem; }
         .metric-val { color: #fff; font-size: 3.5rem; font-weight: 900; }
         .metric-unit { color:#00ff41; font-size:1.5rem; }
     </style>
+    
     <div class="hero-container">
-        <div class="glitch" data-text="T.O.M.M.Y.">T.O.M.M.Y.</div>
-        <div class="sub-glitch">TELEMETRIC OPTICAL & MULTIMODAL KERNEL</div>
-        <div class="metrics-row">
-            <div><div class="metric-label">VISION LATENCY</div><div class="metric-val">18<span class="metric-unit">ms</span></div></div>
-            <div><div class="metric-label">CLOUD APIs</div><div class="metric-val">0<span class="metric-unit">.0%</span></div></div>
-            <div><div class="metric-label">IPC BRIDGE</div><div class="metric-val">60<span class="metric-unit">FPS</span></div></div>
+        <canvas id="matrixCanvas"></canvas>
+        <div class="content">
+            <div class="glitch" data-text="T.O.M.M.Y.">T.O.M.M.Y.</div>
+            <div class="sub-glitch">TELEMETRIC OPTICAL & MULTIMODAL KERNEL</div>
+            <div class="metrics-row">
+                <div><div class="metric-label">VISION LATENCY</div><div class="metric-val">18<span class="metric-unit">ms</span></div></div>
+                <div><div class="metric-label">CLOUD APIs</div><div class="metric-val">0<span class="metric-unit">.0%</span></div></div>
+                <div><div class="metric-label">IPC BRIDGE</div><div class="metric-val">60<span class="metric-unit">FPS</span></div></div>
+            </div>
         </div>
     </div>
-""", height=400)
+    
+    <script>
+        // Matrix Rain Animation
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = 500;
+        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+        const fontSize = 14; const columns = canvas.width / fontSize;
+        const drops = []; for(let x = 0; x < columns; x++) drops[x] = 1;
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(1, 2, 3, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41'; ctx.font = fontSize + 'px monospace';
+            for(let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 33);
+    </script>
+""", height=500)
 
 
 # =========================================================================
-# SECTION 2: THE REWARDING INTERACTIVE SIMULATOR
+# SECTION 2: 3D AI CORE SIMULATOR
 # =========================================================================
-st.markdown('<div class="cinematic-section" style="background: radial-gradient(circle, rgba(10,20,10,0.6) 0%, rgba(2,2,2,1) 100%); border-radius: 12px; border: 1px solid rgba(0,255,65,0.3); padding: 40px;">', unsafe_allow_html=True)
-st.markdown('<h2 style="font-size: 3rem; text-align:center;">LIVE <span class="gradient-text">TELEMETRIC</span> SIMULATOR</h2>', unsafe_allow_html=True)
+st.markdown('<div class="cinematic-section" style="background: radial-gradient(circle, rgba(10,20,10,0.6) 0%, rgba(1,2,3,1) 100%); border-radius: 12px; border: 1px solid rgba(0,255,65,0.3); padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.9);">', unsafe_allow_html=True)
+st.markdown('<h2 style="font-size: 3rem; text-align:center;">3D <span class="gradient-text">TELEMETRIC</span> KERNEL SIMULATOR</h2>', unsafe_allow_html=True)
 
-# The HTML5 Game with Particle Explosions
+# 3D Sphere Interactive Canvas
 components.html("""
     <style>
         body { margin: 0; display:flex; flex-direction:column; align-items:center; font-family: 'Courier New', monospace; background: transparent; color: #fff; }
         .canvas-container { position: relative; width: 100%; max-width: 900px; }
-        canvas { width: 100%; height: 450px; background: #010409; border: 2px solid #30363d; border-radius: 8px; cursor: none; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        .overlay-text { position: absolute; top: 15px; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 10; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 10px #000; color: #8b949e; }
-        .win-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 255, 65, 0.1); display: none; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; pointer-events: none; backdrop-filter: blur(2px); z-index: 20;}
-        .win-overlay h2 { color: #00ff41; font-size: 3rem; text-shadow: 0 0 20px #00ff41; margin: 0; animation: pulse 1s infinite; }
+        canvas { width: 100%; height: 500px; background: #010203; border: 2px solid #1a1f24; border-radius: 8px; cursor: crosshair; box-shadow: 0 10px 40px rgba(0,0,0,0.8); transition: box-shadow 0.5s; }
+        .overlay-text { position: absolute; top: 20px; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 10; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 15px #000; color: #8b949e; letter-spacing: 2px;}
+        .win-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 255, 65, 0.1); display: none; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; pointer-events: none; z-index: 20;}
+        .win-overlay h2 { color: #00ff41; font-size: 4rem; text-shadow: 0 0 30px #00ff41; margin: 0; animation: pulse 0.5s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     </style>
     
     <div class="canvas-container">
-        <div class="overlay-text">SIMULATOR: MOUSE = NOSE TRACKING <span style="color:#00ff41;">|</span> PRESS [SPACEBAR] = BLINK TO CLICK</div>
+        <div class="overlay-text" style="color:#00ff41; animation: pulse 2s infinite;">SIMULATOR: MOVE MOUSE TO ROTATE CORE <span style="color:#fff;">|</span> PRESS [SPACEBAR] TO HYPER-BLINK</div>
         <canvas id="simCanvas"></canvas>
         <div class="win-overlay" id="winScreen">
-            <h2 id="winTitle">KERNEL OVERRIDE</h2>
-            <p style="color:#fff; font-size:1.2rem; background: #000; padding: 5px 10px;">Ocular Click Protocol Engaged at 18ms.</p>
+            <h2 id="winTitle">HYPERSPACE ENGAGED</h2>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = 900; canvas.height = 450;
+        canvas.width = 900; canvas.height = 500;
         
-        let mouseX = canvas.width / 2; let mouseY = canvas.height / 2;
+        let mouseX = 0; let mouseY = 0;
         let isBlinking = false;
+        let hyperspaceSpeed = 0;
         
-        // Buttons
-        const buttons = [
-            { x: 200, y: 225, radius: 50, color: '#30363d', label: 'SYS_01', active: false },
-            { x: 450, y: 225, radius: 60, color: '#30363d', label: 'CORE', active: false },
-            { x: 700, y: 225, radius: 50, color: '#30363d', label: 'NET_02', active: false }
-        ];
-
-        // Background Particles
-        let nodes = [];
-        for(let i=0; i<80; i++) {
-            nodes.push({
-                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-                vx: (Math.random()-0.5)*1, vy: (Math.random()-0.5)*1
-            });
+        // 3D Sphere Mathematics
+        const points = [];
+        const numPoints = 250;
+        const radius = 150;
+        
+        // Generate points on a sphere (Fibonacci lattice)
+        const phi = Math.PI * (3 - Math.sqrt(5)); 
+        for (let i = 0; i < numPoints; i++) {
+            let y = 1 - (i / (numPoints - 1)) * 2; 
+            let r = Math.sqrt(1 - y * y);
+            let theta = phi * i;
+            let x = Math.cos(theta) * r;
+            let z = Math.sin(theta) * r;
+            points.push({ x: x * radius, y: y * radius, z: z * radius, origZ: z * radius, origX: x*radius, origY: y*radius });
         }
         
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-            mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            // Map mouse to center of screen -1 to 1
+            mouseX = (((e.clientX - rect.left) / rect.width) * 2 - 1) * 2;
+            mouseY = (((e.clientY - rect.top) / rect.height) * 2 - 1) * 2;
         });
 
         window.addEventListener('keydown', (e) => {
             if(e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
-                isBlinking = true;
-                // Check if hovering over a button
-                for(let b of buttons) {
-                    let dx = mouseX - b.x; let dy = mouseY - b.y;
-                    if (Math.sqrt(dx*dx + dy*dy) < b.radius) {
-                        triggerWin(b.label);
-                    }
+                if (!isBlinking) {
+                    isBlinking = true;
+                    hyperspaceSpeed = 30; // Explosion force
+                    document.getElementById('winScreen').style.display = "flex";
+                    canvas.style.boxShadow = "0 0 80px rgba(0,255,65,0.8)";
                 }
             }
         });
         window.addEventListener('keyup', (e) => {
-            if(e.code === 'Space' || e.key === ' ') isBlinking = false;
+            if(e.code === 'Space' || e.key === ' ') {
+                isBlinking = false;
+                document.getElementById('winScreen').style.display = "none";
+                canvas.style.boxShadow = "0 10px 40px rgba(0,0,0,0.8)";
+            }
         });
 
-        function triggerWin(btnLabel) {
-            document.getElementById('winTitle').innerText = "[" + btnLabel + "] ENGAGED";
-            document.getElementById('winScreen').style.display = "flex";
-            setTimeout(() => { document.getElementById('winScreen').style.display = "none"; }, 1500);
+        // 3D Rotation Math
+        function rotate3D(point, pitch, yaw) {
+            let cosa = Math.cos(yaw), sina = Math.sin(yaw);
+            let cosb = Math.cos(pitch), sinb = Math.sin(pitch);
+            
+            // Y-axis rotation (yaw)
+            let x1 = point.x * cosa - point.z * sina;
+            let z1 = point.x * sina + point.z * cosa;
+            
+            // X-axis rotation (pitch)
+            let y2 = point.y * cosb - z1 * sinb;
+            let z2 = point.y * sinb + z1 * cosb;
+            
+            return { x: x1, y: y2, z: z2 };
         }
 
+        let baseAngle = 0;
+        
         function animate() {
             requestAnimationFrame(animate);
-            ctx.fillStyle = '#010409'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = isBlinking ? 'rgba(0,20,0,0.3)' : 'rgba(1, 2, 3, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw Background Nodes
-            ctx.strokeStyle = "rgba(0, 255, 65, 0.1)"; ctx.fillStyle = "rgba(0, 255, 65, 0.3)";
-            for(let i=0; i<nodes.length; i++) {
-                let n = nodes[i];
-                n.x += n.vx; n.y += n.vy;
-                if(n.x < 0 || n.x > canvas.width) n.vx *= -1;
-                if(n.y < 0 || n.y > canvas.height) n.vy *= -1;
-                ctx.beginPath(); ctx.arc(n.x, n.y, 2, 0, Math.PI*2); ctx.fill();
-                
-                // Nodes react to mouse gravity
-                let dx = mouseX - n.x; let dy = mouseY - n.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                if(dist < 150) {
-                    ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(mouseX, mouseY); ctx.stroke();
-                }
+            baseAngle += 0.005; // Auto rotation
+            let yaw = baseAngle + mouseX;
+            let pitch = mouseY;
+            
+            // Hyperspace Physics
+            if (isBlinking) {
+                hyperspaceSpeed *= 1.05; // Accelerate outwards
+            } else {
+                hyperspaceSpeed *= 0.9; // Snap back
             }
 
-            // Draw Buttons
-            for(let b of buttons) {
-                let dx = mouseX - b.x; let dy = mouseY - b.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
+            // Project and Draw
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            
+            for (let i = 0; i < points.length; i++) {
+                let p = points[i];
                 
-                if (dist < b.radius) {
-                    ctx.fillStyle = "rgba(0, 255, 65, 0.2)";
-                    ctx.strokeStyle = "#00ff41";
-                    ctx.lineWidth = 3;
-                } else {
-                    ctx.fillStyle = "rgba(48, 54, 61, 0.5)";
-                    ctx.strokeStyle = "#8b949e";
+                // Explode z coordinate during blink
+                p.x = p.origX * (1 + hyperspaceSpeed * 0.01);
+                p.y = p.origY * (1 + hyperspaceSpeed * 0.01);
+                p.z = p.origZ * (1 + hyperspaceSpeed * 0.01);
+                
+                let rotated = rotate3D(p, pitch, yaw);
+                
+                // 3D Perspective Projection
+                let perspective = 400 / (400 + rotated.z);
+                let px = rotated.x * perspective;
+                let py = rotated.y * perspective;
+                
+                // Color scaling based on Z-depth
+                let alpha = (rotated.z + radius) / (radius * 2);
+                alpha = Math.max(0.1, Math.min(1, alpha));
+                let size = perspective * (isBlinking ? 4 : 2);
+                
+                ctx.fillStyle = isBlinking ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 255, 65, ${alpha})`;
+                
+                ctx.beginPath();
+                ctx.arc(px, py, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw connecting lines to simulate wireframe mesh
+                if (i > 0 && i % 3 === 0 && !isBlinking) {
+                    let prevRotated = rotate3D(points[i-1], pitch, yaw);
+                    let prevPersp = 400 / (400 + prevRotated.z);
+                    ctx.strokeStyle = `rgba(0, 255, 65, ${alpha * 0.3})`;
                     ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(px, py);
+                    ctx.lineTo(prevRotated.x * prevPersp, prevRotated.y * prevPersp);
+                    ctx.stroke();
                 }
-                
-                ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
-                ctx.fill(); ctx.stroke();
-                
-                // Label
-                ctx.fillStyle = dist < b.radius ? "#00ff41" : "#8b949e";
-                ctx.font = "bold 20px 'Courier New'"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                ctx.fillText(b.label, b.x, b.y);
             }
-
-            // Draw Cursor (FaceMesh Node Simulator)
-            ctx.strokeStyle = isBlinking ? "#fff" : "#00ff41";
-            ctx.lineWidth = isBlinking ? 4 : 2;
-            ctx.beginPath(); ctx.arc(mouseX, mouseY, isBlinking ? 15 : 25, 0, Math.PI * 2); ctx.stroke();
             
-            ctx.fillStyle = isBlinking ? "#fff" : "#00ff41";
-            ctx.beginPath(); ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2); ctx.fill();
-            
-            // Crosshairs
-            ctx.beginPath(); ctx.moveTo(mouseX-35, mouseY); ctx.lineTo(mouseX+35, mouseY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(mouseX, mouseY-35); ctx.lineTo(mouseX, mouseY+35); ctx.stroke();
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
         }
         animate();
     </script>
-""", height=480)
+""", height=550)
 st.markdown('</div>', unsafe_allow_html=True)
 
 
