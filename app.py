@@ -261,6 +261,47 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================================
+# SECTION 2.5: HARDWARE ARCHITECTURE SCHEMATIC
+# =========================================================================
+st.markdown('<div class="cinematic-section" style="padding: 80px 0;">', unsafe_allow_html=True)
+st.markdown('<h2 style="font-size: 3rem; text-align:center; margin-bottom: 50px;">// SYSTEM <span class="gradient-text">ARCHITECTURE</span></h2>', unsafe_allow_html=True)
+components.html("""
+    <style>
+        .flow-container { display: flex; justify-content: center; align-items: center; gap: 40px; font-family: 'Courier New', monospace; padding: 20px; }
+        .node { width: 180px; height: 100px; background: #010409; border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; cursor: pointer; transition: 0.3s; z-index: 2; }
+        .node:hover { border-color: #00ff41; box-shadow: 0 0 30px rgba(0,255,65,0.2); transform: translateY(-5px); }
+        .node-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; color: #58a6ff; }
+        .node-desc { font-size: 0.7rem; color: #8b949e; }
+        
+        .arrow { width: 60px; height: 2px; background: #30363d; position: relative; }
+        .arrow::after { content: ''; position: absolute; right: 0; top: -4px; border-left: 10px solid #30363d; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+        
+        .packet { position: absolute; top: -4px; left: 0; width: 10px; height: 10px; background: #00ff41; border-radius: 50%; box-shadow: 0 0 10px #00ff41; animation: flow 2s linear infinite; }
+        @keyframes flow { 0% { left: 0; opacity: 1; } 100% { left: 100%; opacity: 0; } }
+        
+        .node:hover .node-title { color: #00ff41; }
+    </style>
+    <div class="flow-container">
+        <div class="node">
+            <div class="node-title">VISION.EXE</div>
+            <div class="node-desc">MediaPipe FaceMesh<br>Process ID: 8192</div>
+        </div>
+        <div class="arrow"><div class="packet"></div></div>
+        <div class="node" style="border-color: #00ff41;">
+            <div class="node-title" style="color: #00ff41;">IPC BRIDGE</div>
+            <div class="node-desc">.tommy_state.json<br>Latency: < 2ms</div>
+        </div>
+        <div class="arrow"><div class="packet"></div></div>
+        <div class="node">
+            <div class="node-title">VOICE.EXE</div>
+            <div class="node-desc">spaCy NLP<br>Process ID: 8193</div>
+        </div>
+    </div>
+""", height=200)
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# =========================================================================
 # SECTION 3: THE VISION ENGINE
 # =========================================================================
 st.markdown('<div class="cinematic-section">', unsafe_allow_html=True)
@@ -269,14 +310,60 @@ col1, col2 = st.columns([1, 1], gap="large", vertical_alignment="center")
 with col1:
     components.html("""
         <style>
-            .radar { width: 350px; height: 350px; border-radius: 50%; border: 2px solid #00ff41; margin: 0 auto; overflow: hidden; position: relative; box-shadow: 0 0 50px rgba(0,255,65,0.15); }
-            .radar::after { content: ''; position: absolute; width: 175px; height: 175px; background: linear-gradient(45deg, rgba(0,255,65,0.8) 0%, transparent 50%); transform-origin: bottom right; top: 0; left: 0; animation: scan 1.5s linear infinite; }
-            .grid { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px); background-size: 40px 40px; opacity: 0.1; }
-            .face-mesh { position: absolute; width: 100px; height: 150px; border: 1px dashed #00ff41; top: 30%; left: 35%; border-radius: 50%; animation: pulse 2s infinite; }
-            @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-            @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,255,65,0.4); } 70% { box-shadow: 0 0 0 30px rgba(0,255,65,0); } 100% { box-shadow: 0 0 0 0 rgba(0,255,65,0); } }
+            .sim-container { display: flex; width: 100%; height: 350px; background: #010409; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; font-family: 'Courier New', monospace; box-shadow: 0 0 50px rgba(0,255,65,0.15); }
+            .face-panel { flex: 1; position: relative; border-right: 1px dashed #30363d; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, rgba(0,255,65,0.05) 0%, transparent 70%); overflow: hidden; }
+            .screen-panel { flex: 1; position: relative; background: #0d1117; overflow: hidden; }
+            
+            .head { position: absolute; width: 120px; height: 160px; border: 2px dashed rgba(0,255,65,0.3); border-radius: 60px; transition: transform 0.1s; display: flex; justify-content: center; }
+            .eye { position: absolute; width: 12px; height: 12px; background: #00ff41; border-radius: 50%; box-shadow: 0 0 10px #00ff41; top: 40px; }
+            .eye.left { left: 25px; } .eye.right { right: 25px; }
+            .nose { position: absolute; width: 8px; height: 8px; background: #ffbd2e; border-radius: 50%; top: 80px; box-shadow: 0 0 10px #ffbd2e; }
+            
+            .cursor { position: absolute; width: 15px; height: 15px; background: #fff; clip-path: polygon(0 0, 100% 100%, 0 100%); transform: rotate(-45deg); transition: all 0.1s; box-shadow: 0 0 10px #fff; z-index: 10;}
+            .ripple { position: absolute; width: 40px; height: 40px; border: 2px solid #00ff41; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0; pointer-events: none; }
+            
+            @keyframes blink-anim { 0%, 90%, 100% { transform: scaleY(1); opacity: 1; } 95% { transform: scaleY(0.1); opacity: 0.2; } }
+            .eye.blink { animation: blink-anim 3s infinite; }
         </style>
-        <div class="radar"><div class="grid"></div><div class="face-mesh"></div></div>
+        <div class="sim-container">
+            <div class="face-panel">
+                <div style="position:absolute; top: 10px; left: 10px; color: #8b949e; font-size: 0.7rem;">[INPUT] FACEMESH</div>
+                <div class="head" id="simHead">
+                    <div class="eye left blink" id="eyeL"></div>
+                    <div class="eye right blink" id="eyeR"></div>
+                    <div class="nose" id="simNose"></div>
+                </div>
+            </div>
+            <div class="screen-panel" id="screenPanel">
+                <div style="position:absolute; top: 10px; left: 10px; color: #8b949e; font-size: 0.7rem;">[OUTPUT] IPC CURSOR</div>
+                <div class="cursor" id="simCursor" style="left: 50%; top: 50%;"></div>
+            </div>
+        </div>
+        <script>
+            const head = document.getElementById('simHead');
+            const cursor = document.getElementById('simCursor');
+            const screen = document.getElementById('screenPanel');
+            let angle = 0;
+            function animateSim() {
+                angle += 0.03;
+                const headX = Math.sin(angle) * 40;
+                const headY = Math.cos(angle * 0.5) * 20;
+                head.style.transform = `translate(${headX}px, ${headY}px)`;
+                cursor.style.left = `calc(50% + ${headX * 1.5}px)`;
+                cursor.style.top = `calc(50% + ${headY * 1.5}px)`;
+                requestAnimationFrame(animateSim);
+            }
+            animateSim();
+            
+            document.getElementById('eyeL').addEventListener('animationiteration', () => {
+                const ripple = document.createElement('div');
+                ripple.className = 'ripple';
+                ripple.style.left = cursor.style.left;
+                ripple.style.top = cursor.style.top;
+                screen.appendChild(ripple);
+                ripple.animate([ { transform: 'translate(-50%, -50%) scale(0)', opacity: 1 }, { transform: 'translate(-50%, -50%) scale(2)', opacity: 0 } ], { duration: 600, easing: 'ease-out' }).onfinish = () => ripple.remove();
+            });
+        </script>
     """, height=400)
 
 with col2:
@@ -319,19 +406,98 @@ with col3:
 with col4:
     components.html("""
         <style>
-            .wave-container { display: flex; align-items: center; justify-content: center; height: 350px; gap: 8px; }
-            .bar { width: 25px; background: #00ff41; border-radius: 12px; animation: sound 0ms -800ms linear infinite alternate; box-shadow: 0 0 20px rgba(0,255,65,0.6); }
-            @keyframes sound { 0% { height: 20px; opacity: 0.3; } 100% { height: 250px; opacity: 1; } }
-            .bar:nth-child(1)  { animation-duration: 474ms; } .bar:nth-child(2)  { animation-duration: 433ms; }
-            .bar:nth-child(3)  { animation-duration: 407ms; } .bar:nth-child(4)  { animation-duration: 458ms; }
-            .bar:nth-child(5)  { animation-duration: 400ms; } .bar:nth-child(6)  { animation-duration: 427ms; }
-            .bar:nth-child(7)  { animation-duration: 441ms; } .bar:nth-child(8)  { animation-duration: 419ms; }
+            .voice-sim { width: 100%; height: 350px; background: #010409; border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; font-family: 'Courier New', monospace; box-shadow: 0 0 50px rgba(0,255,65,0.15); }
+            .top-panel { flex: 1; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid #30363d; background: radial-gradient(circle, rgba(0,255,65,0.05) 0%, transparent 70%); gap: 10px; }
+            .mic { width: 20px; height: 40px; border-radius: 10px; border: 2px solid #00ff41; position: relative; display: flex; justify-content: center; box-shadow: 0 0 15px #00ff41; }
+            .mic::after { content: ''; position: absolute; bottom: -12px; width: 15px; height: 10px; border-left: 2px solid #00ff41; border-bottom: 2px solid #00ff41; border-right: 2px solid #00ff41; border-radius: 0 0 10px 10px; }
+            
+            .bar { width: 10px; background: #00ff41; border-radius: 5px; animation: sound 0ms -800ms linear infinite alternate; box-shadow: 0 0 10px rgba(0,255,65,0.6); }
+            @keyframes sound { 0% { height: 10px; opacity: 0.3; } 100% { height: 60px; opacity: 1; } }
+            .bar:nth-child(1) { animation-duration: 474ms; } .bar:nth-child(2) { animation-duration: 433ms; } .bar:nth-child(3) { animation-duration: 407ms; }
+            .bar:nth-child(5) { animation-duration: 458ms; } .bar:nth-child(6) { animation-duration: 400ms; } .bar:nth-child(7) { animation-duration: 427ms; }
+            
+            .code-panel { flex: 1.5; background: #0d1117; padding: 20px; color: #fff; font-size: 1.1rem; position: relative; line-height: 1.5; }
+            .code-cursor { display: inline-block; width: 10px; height: 18px; background: #fff; animation: blink 1s infinite; margin-left: 4px; vertical-align: middle; }
+            @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         </style>
-        <div class="wave-container">
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="voice-sim">
+            <div class="top-panel">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="mic" style="margin: 0 20px;"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+            <div class="code-panel">
+                <div style="color: #8b949e; font-size: 0.8rem; margin-bottom: 15px; letter-spacing: 1px;">[OUTPUT] NLP CODE GENERATOR</div>
+                <span style="color:#ff7b72;">import</span> pyautogui<br>
+                <span id="typeTarget" style="color: #79c0ff;"></span><span class="code-cursor"></span>
+            </div>
         </div>
+        <script>
+            const target = document.getElementById('typeTarget');
+            const codeStr = "pyautogui.hotkey('ctrl', 's')\\nprint('Voice saved file!')";
+            let index = 0;
+            
+            function typeCode() {
+                if (index < codeStr.length) {
+                    if (codeStr.charAt(index) === '\\n') target.innerHTML += '<br><span style="color:#a5d6ff;">';
+                    else target.innerHTML += codeStr.charAt(index);
+                    index++;
+                    setTimeout(typeCode, Math.random() * 80 + 30);
+                } else {
+                    target.innerHTML += '</span>';
+                    setTimeout(() => { target.innerHTML = ''; index = 0; typeCode(); }, 3000);
+                }
+            }
+            setTimeout(typeCode, 1000);
+        </script>
     """, height=350)
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# =========================================================================
+# SECTION 4.5: GLOBAL TELEMETRY
+# =========================================================================
+st.markdown('<div class="cinematic-section" style="padding: 100px 0;">', unsafe_allow_html=True)
+st.markdown('<h2 style="font-size: 3rem; text-align:center; margin-bottom: 10px;">GLOBAL <span class="gradient-text">TELEMETRY</span></h2>', unsafe_allow_html=True)
+st.markdown('<p style="color:#8b949e; text-align:center; font-size:1.1rem; margin-bottom: 40px;">Live OS Kernel Synchronization</p>', unsafe_allow_html=True)
+
+components.html("""
+    <style> body { margin: 0; overflow: hidden; background: transparent; display: flex; justify-content: center; } canvas { filter: drop-shadow(0 0 30px rgba(0,255,65,0.2)); } </style>
+    <div id="globe-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / 400, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, 400);
+        document.getElementById('globe-container').appendChild(renderer.domElement);
+        
+        const geometry = new THREE.SphereGeometry(2, 32, 32);
+        const edges = new THREE.EdgesGeometry(geometry);
+        const material = new THREE.LineBasicMaterial({ color: 0x00ff41, transparent: true, opacity: 0.15 });
+        const sphere = new THREE.LineSegments(edges, material);
+        scene.add(sphere);
+        
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 50;
+        const posArray = new Float32Array(particlesCount * 3);
+        for(let i = 0; i < particlesCount * 3; i++) { posArray[i] = (Math.random() - 0.5) * 4.2; }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0x00ff41 });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+        
+        camera.position.z = 6;
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.y += 0.002;
+            sphere.rotation.x += 0.001;
+            particlesMesh.rotation.y -= 0.001;
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+""", height=400)
 st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -419,6 +585,44 @@ with col_d2:
         mime="application/x-msdownload"
     )
 
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# =========================================================================
+# SECTION 5.5: BETA ACCESS TERMINAL
+# =========================================================================
+st.markdown('<div class="cinematic-section" style="padding: 100px 0;">', unsafe_allow_html=True)
+components.html("""
+    <style>
+        .terminal-box { background: #010409; border: 1px solid #30363d; border-radius: 8px; width: 60%; margin: 0 auto; padding: 30px; font-family: 'Courier New', monospace; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .prompt { color: #00ff41; font-weight: bold; font-size: 1.2rem; }
+        .input-line { display: flex; align-items: center; margin-top: 15px; }
+        .term-input { background: transparent; border: none; outline: none; color: #fff; font-family: 'Courier New', monospace; font-size: 1.2rem; margin-left: 10px; width: 80%; }
+        .term-input::placeholder { color: #30363d; }
+    </style>
+    <div class="terminal-box" id="termBox">
+        <div style="color: #8b949e; margin-bottom: 15px;">T.O.M.M.Y. OS v1.0.0 [Secure Enclave]</div>
+        <div style="color: #fff; font-size: 1.1rem; margin-bottom: 20px;">Execute <span style="color:#ffbd2e;">request_access()</span> to join the waitlist.</div>
+        <div class="input-line">
+            <span class="prompt">root@tommy:~#</span>
+            <input type="email" class="term-input" id="emailInput" placeholder="Enter your email address..." autocomplete="off">
+        </div>
+    </div>
+    <script>
+        const input = document.getElementById('emailInput');
+        const box = document.getElementById('termBox');
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (input.value.includes('@')) {
+                    box.innerHTML = `<div style="color:#00ff41; font-size:1.2rem; margin-top:20px; text-align:center;">[+] ACCESS GRANTED. CREDENTIALS DISPATCHED TO: ${input.value}</div>`;
+                } else {
+                    input.value = '';
+                    input.placeholder = 'INVALID PROTOCOL. TRY AGAIN.';
+                }
+            }
+        });
+    </script>
+""", height=250)
 st.markdown('</div>', unsafe_allow_html=True)
 
 
