@@ -429,7 +429,24 @@ st.markdown('<div class="cinematic-section" style="padding-bottom: 100px;">', un
 st.markdown('<h2 style="font-size: 3rem; text-align:center;">// ACADEMIC <span class="gradient-text">ARCHITECTS</span></h2>', unsafe_allow_html=True)
 st.markdown('<p style="color:#8b949e; text-align:center; max-width:800px; margin: 20px auto; font-size:1.1rem;">T.O.M.M.Y. was engineered at Lovely Professional University to evaluate the absolute limits of Multi-Process Hardware Concurrency on Python Operating System Wrappers.</p>', unsafe_allow_html=True)
 
-components.html("""
+import base64
+import os
+
+def get_base64_of_bin_file(bin_file):
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return f"data:image/jpeg;base64,{base64.b64encode(data).decode()}"
+    except Exception:
+        return "https://via.placeholder.com/200x200"
+
+base_path = os.path.dirname(os.path.abspath(__file__))
+chirag_b64 = get_base64_of_bin_file(os.path.join(base_path, "assets", "chirag.jpeg"))
+chava_b64 = get_base64_of_bin_file(os.path.join(base_path, "assets", "chava.jpeg"))
+lalmalsawm_b64 = get_base64_of_bin_file(os.path.join(base_path, "assets", "lalmalsawm.jpeg"))
+kaushal_b64 = get_base64_of_bin_file(os.path.join(base_path, "assets", "kaushal.jpeg"))
+
+html_content = """
     <style>
         body { margin: 0; display:flex; justify-content:center; font-family: 'Courier New', monospace; background: transparent; }
         .team-container { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; padding: 40px 20px; perspective: 1000px; }
@@ -462,19 +479,27 @@ components.html("""
             border-bottom: 1px solid #30363d;
         }
         
-        /* Sci-Fi Placeholder Image */
+        /* Sci-Fi Cyberpunk Filter overlaying the real photos */
         .avatar-wrapper img {
-            width: 80%; height: 80%; 
-            object-fit: contain; 
+            width: 100%; height: 100%; 
+            object-fit: cover; 
             opacity: 0.6; 
             transition: all 0.4s;
-            filter: grayscale(100%) sepia(100%) hue-rotate(70deg) saturate(300%) contrast(120%);
+            filter: sepia(100%) hue-rotate(80deg) saturate(300%) contrast(150%) brightness(60%);
+            mix-blend-mode: screen;
         }
         
         .card:hover .avatar-wrapper img { 
-            opacity: 1; 
-            filter: grayscale(0%) sepia(0%); 
-            transform: scale(1.1);
+            opacity: 0.9; 
+            filter: sepia(30%) hue-rotate(80deg) saturate(150%) contrast(120%) brightness(90%); 
+            transform: scale(1.05);
+        }
+        
+        /* TV Static overlay */
+        .avatar-wrapper::after {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none; z-index: 5;
         }
         
         /* Cyberpunk Scanline Effect */
@@ -506,8 +531,7 @@ components.html("""
         <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
             <div class="avatar-wrapper">
                 <div class="scanline"></div>
-                <!-- Replace src with real photo URLs later! Currently using Sci-Fi Bot avatars -->
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Chirag&backgroundColor=transparent" alt="Chirag">
+                <img src="URL_CHIRAG" alt="Chirag">
             </div>
             <div class="info">
                 <p class="name">CHIRAG PHOGAT</p>
@@ -519,7 +543,7 @@ components.html("""
         <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
             <div class="avatar-wrapper">
                 <div class="scanline"></div>
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Chava&backgroundColor=transparent" alt="Chava">
+                <img src="URL_CHAVA" alt="Chava">
             </div>
             <div class="info">
                 <p class="name">CHAVA HARSHA</p>
@@ -531,7 +555,7 @@ components.html("""
         <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
             <div class="avatar-wrapper">
                 <div class="scanline"></div>
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Lalmalsawm&backgroundColor=transparent" alt="Lalmalsawm">
+                <img src="URL_LALMALSAWM" alt="Lalmalsawm">
             </div>
             <div class="info">
                 <p class="name">LALMALSAWM GUITE</p>
@@ -543,7 +567,7 @@ components.html("""
         <div class="card" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
             <div class="avatar-wrapper">
                 <div class="scanline"></div>
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Kaushal&backgroundColor=transparent" alt="Kaushal">
+                <img src="URL_KAUSHAL" alt="Kaushal">
             </div>
             <div class="info">
                 <p class="name">KAUSHAL PATHAK</p>
@@ -571,5 +595,12 @@ components.html("""
             card.style.transform = `translateY(0) perspective(1000px) rotateX(0deg) rotateY(0deg)`;
         }
     </script>
-""", height=450)
+"""
+
+html_content = html_content.replace('URL_CHIRAG', chirag_b64)
+html_content = html_content.replace('URL_CHAVA', chava_b64)
+html_content = html_content.replace('URL_LALMALSAWM', lalmalsawm_b64)
+html_content = html_content.replace('URL_KAUSHAL', kaushal_b64)
+
+components.html(html_content, height=450)
 st.markdown('</div>', unsafe_allow_html=True)
