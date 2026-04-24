@@ -483,15 +483,12 @@ html_content = """
         .avatar-wrapper img {
             width: 100%; height: 100%; 
             object-fit: cover; 
-            opacity: 0.6; 
+            opacity: 0.9; 
             transition: all 0.4s;
-            filter: sepia(100%) hue-rotate(80deg) saturate(300%) contrast(150%) brightness(60%);
-            mix-blend-mode: screen;
         }
         
         .card:hover .avatar-wrapper img { 
-            opacity: 0.9; 
-            filter: sepia(30%) hue-rotate(80deg) saturate(150%) contrast(120%) brightness(90%); 
+            opacity: 1; 
             transform: scale(1.05);
         }
         
