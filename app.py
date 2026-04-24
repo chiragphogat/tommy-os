@@ -118,11 +118,12 @@ components.html("""
     </style>
     
     <div class="canvas-container">
-        <div class="overlay-text" style="color:#00ff41; animation: pulse 2s infinite;">SIMULATOR: MOVE MOUSE TO ROTATE CORE <span style="color:#fff;">|</span> PRESS [SPACEBAR] TO HYPER-BLINK</div>
+        <div class="overlay-text" style="color:#00ff41; animation: pulse 2s infinite;">OCULAR TRAINING: TRACK RED TARGET <span style="color:#fff;">|</span> PRESS [SPACEBAR] TO FIRE</div>
         <canvas id="simCanvas"></canvas>
         <div class="win-overlay" id="winScreen">
-            <h2 id="winTitle">HYPERSPACE ENGAGED</h2>
+            <h2 id="winTitle" style="color: #ff5f56; text-shadow: 0 0 20px #ff5f56;">TARGET DESTROYED</h2>
         </div>
+        <div style="position: absolute; top: 20px; right: 20px; color: #00ff41; font-family: 'Courier New', monospace; font-size: 1.5rem; font-weight: bold; text-shadow: 0 0 10px #00ff41;">SCORE: <span id="scoreVal">0</span></div>
     </div>
 
     <script>
@@ -130,129 +131,102 @@ components.html("""
         const ctx = canvas.getContext('2d');
         canvas.width = 900; canvas.height = 500;
         
-        let mouseX = 0; let mouseY = 0;
-        let isBlinking = false;
-        let hyperspaceSpeed = 0;
+        let mouseX = canvas.width / 2; let mouseY = canvas.height / 2;
+        let score = 0;
+        let targetX = Math.random() * (canvas.width - 100) + 50;
+        let targetY = Math.random() * (canvas.height - 100) + 50;
+        let targetRadius = 25;
+        let targetSpeedX = (Math.random() - 0.5) * 4;
+        let targetSpeedY = (Math.random() - 0.5) * 4;
         
-        // 3D Sphere Mathematics
-        const points = [];
-        const numPoints = 250;
-        const radius = 150;
-        
-        // Generate points on a sphere (Fibonacci lattice)
-        const phi = Math.PI * (3 - Math.sqrt(5)); 
-        for (let i = 0; i < numPoints; i++) {
-            let y = 1 - (i / (numPoints - 1)) * 2; 
-            let r = Math.sqrt(1 - y * y);
-            let theta = phi * i;
-            let x = Math.cos(theta) * r;
-            let z = Math.sin(theta) * r;
-            points.push({ x: x * radius, y: y * radius, z: z * radius, origZ: z * radius, origX: x*radius, origY: y*radius });
-        }
+        let isShooting = false;
+        let ripples = [];
         
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            // Map mouse to center of screen -1 to 1
-            mouseX = (((e.clientX - rect.left) / rect.width) * 2 - 1) * 2;
-            mouseY = (((e.clientY - rect.top) / rect.height) * 2 - 1) * 2;
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
         });
 
         window.addEventListener('keydown', (e) => {
             if(e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
-                if (!isBlinking) {
-                    isBlinking = true;
-                    hyperspaceSpeed = 30; // Explosion force
-                    document.getElementById('winScreen').style.display = "flex";
-                    canvas.style.boxShadow = "0 0 80px rgba(0,255,65,0.8)";
+                if(!isShooting) {
+                    isShooting = true;
+                    ripples.push({x: mouseX, y: mouseY, radius: 0, opacity: 1});
+                    
+                    // Check Hit
+                    let dist = Math.hypot(mouseX - targetX, mouseY - targetY);
+                    if(dist < targetRadius + 20) {
+                        score++;
+                        document.getElementById('scoreVal').innerText = score;
+                        document.getElementById('winScreen').style.display = "flex";
+                        // Reset target
+                        setTimeout(() => {
+                            targetX = Math.random() * (canvas.width - 100) + 50;
+                            targetY = Math.random() * (canvas.height - 100) + 50;
+                            targetSpeedX = (Math.random() - 0.5) * (4 + score*0.5);
+                            targetSpeedY = (Math.random() - 0.5) * (4 + score*0.5);
+                            document.getElementById('winScreen').style.display = "none";
+                        }, 500);
+                    }
                 }
             }
         });
         window.addEventListener('keyup', (e) => {
-            if(e.code === 'Space' || e.key === ' ') {
-                isBlinking = false;
-                document.getElementById('winScreen').style.display = "none";
-                canvas.style.boxShadow = "0 10px 40px rgba(0,0,0,0.8)";
-            }
+            if(e.code === 'Space' || e.key === ' ') { isShooting = false; }
         });
-
-        // 3D Rotation Math
-        function rotate3D(point, pitch, yaw) {
-            let cosa = Math.cos(yaw), sina = Math.sin(yaw);
-            let cosb = Math.cos(pitch), sinb = Math.sin(pitch);
-            
-            // Y-axis rotation (yaw)
-            let x1 = point.x * cosa - point.z * sina;
-            let z1 = point.x * sina + point.z * cosa;
-            
-            // X-axis rotation (pitch)
-            let y2 = point.y * cosb - z1 * sinb;
-            let z2 = point.y * sinb + z1 * cosb;
-            
-            return { x: x1, y: y2, z: z2 };
-        }
-
-        let baseAngle = 0;
         
         function animate() {
             requestAnimationFrame(animate);
-            ctx.fillStyle = isBlinking ? 'rgba(0,20,0,0.3)' : 'rgba(1, 2, 3, 1)';
+            ctx.fillStyle = 'rgba(1, 4, 9, 0.4)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            baseAngle += 0.005; // Auto rotation
-            let yaw = baseAngle + mouseX;
-            let pitch = mouseY;
+            // Draw Grid
+            ctx.strokeStyle = 'rgba(0, 255, 65, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for(let i=0; i<canvas.width; i+=40) { ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); }
+            for(let j=0; j<canvas.height; j+=40) { ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); }
+            ctx.stroke();
             
-            // Hyperspace Physics
-            if (isBlinking) {
-                hyperspaceSpeed *= 1.05; // Accelerate outwards
-            } else {
-                hyperspaceSpeed *= 0.9; // Snap back
-            }
-
-            // Project and Draw
-            ctx.translate(canvas.width / 2, canvas.height / 2);
+            // Update Target
+            targetX += targetSpeedX; targetY += targetSpeedY;
+            if(targetX < targetRadius || targetX > canvas.width - targetRadius) targetSpeedX *= -1;
+            if(targetY < targetRadius || targetY > canvas.height - targetRadius) targetSpeedY *= -1;
             
-            for (let i = 0; i < points.length; i++) {
-                let p = points[i];
-                
-                // Explode z coordinate during blink
-                p.x = p.origX * (1 + hyperspaceSpeed * 0.01);
-                p.y = p.origY * (1 + hyperspaceSpeed * 0.01);
-                p.z = p.origZ * (1 + hyperspaceSpeed * 0.01);
-                
-                let rotated = rotate3D(p, pitch, yaw);
-                
-                // 3D Perspective Projection
-                let perspective = 400 / (400 + rotated.z);
-                let px = rotated.x * perspective;
-                let py = rotated.y * perspective;
-                
-                // Color scaling based on Z-depth
-                let alpha = (rotated.z + radius) / (radius * 2);
-                alpha = Math.max(0.1, Math.min(1, alpha));
-                let size = perspective * (isBlinking ? 4 : 2);
-                
-                ctx.fillStyle = isBlinking ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 255, 65, ${alpha})`;
-                
+            // Draw Target
+            ctx.beginPath();
+            ctx.arc(targetX, targetY, targetRadius, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255, 95, 86, 0.2)';
+            ctx.fill();
+            ctx.strokeStyle = '#ff5f56';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw Crosshair (Mouse)
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, 15, 0, Math.PI*2);
+            ctx.strokeStyle = '#00ff41';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(mouseX - 25, mouseY); ctx.lineTo(mouseX + 25, mouseY);
+            ctx.moveTo(mouseX, mouseY - 25); ctx.lineTo(mouseX, mouseY + 25);
+            ctx.stroke();
+            
+            // Draw Ripples
+            for(let i=ripples.length-1; i>=0; i--) {
+                let r = ripples[i];
                 ctx.beginPath();
-                ctx.arc(px, py, size, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Draw connecting lines to simulate wireframe mesh
-                if (i > 0 && i % 3 === 0 && !isBlinking) {
-                    let prevRotated = rotate3D(points[i-1], pitch, yaw);
-                    let prevPersp = 400 / (400 + prevRotated.z);
-                    ctx.strokeStyle = `rgba(0, 255, 65, ${alpha * 0.3})`;
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(px, py);
-                    ctx.lineTo(prevRotated.x * prevPersp, prevRotated.y * prevPersp);
-                    ctx.stroke();
-                }
+                ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2);
+                ctx.strokeStyle = `rgba(0, 255, 65, ${r.opacity})`;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                r.radius += 5;
+                r.opacity -= 0.05;
+                if(r.opacity <= 0) ripples.splice(i, 1);
             }
-            
-            ctx.translate(-canvas.width / 2, -canvas.height / 2);
         }
         animate();
     </script>
@@ -267,34 +241,59 @@ st.markdown('<div class="cinematic-section" style="padding: 80px 0;">', unsafe_a
 st.markdown('<h2 style="font-size: 3rem; text-align:center; margin-bottom: 50px;">// SYSTEM <span class="gradient-text">ARCHITECTURE</span></h2>', unsafe_allow_html=True)
 components.html("""
     <style>
-        .flow-container { display: flex; justify-content: center; align-items: center; gap: 40px; font-family: 'Courier New', monospace; padding: 20px; }
-        .node { width: 180px; height: 100px; background: #010409; border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; cursor: pointer; transition: 0.3s; z-index: 2; }
+        .flow-container { display: flex; justify-content: center; align-items: center; gap: 30px; font-family: 'Courier New', monospace; padding: 20px; position: relative; }
+        .node { width: 160px; height: 90px; background: #010409; border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; cursor: pointer; transition: 0.3s; z-index: 5; }
         .node:hover { border-color: #00ff41; box-shadow: 0 0 30px rgba(0,255,65,0.2); transform: translateY(-5px); }
-        .node-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; color: #58a6ff; }
-        .node-desc { font-size: 0.7rem; color: #8b949e; }
+        .node-title { font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: #58a6ff; }
         
-        .arrow { width: 60px; height: 2px; background: #30363d; position: relative; }
+        .arrow { width: 40px; height: 2px; background: #30363d; position: relative; }
         .arrow::after { content: ''; position: absolute; right: 0; top: -4px; border-left: 10px solid #30363d; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
-        
-        .packet { position: absolute; top: -4px; left: 0; width: 10px; height: 10px; background: #00ff41; border-radius: 50%; box-shadow: 0 0 10px #00ff41; animation: flow 2s linear infinite; }
+        .packet { position: absolute; top: -4px; left: 0; width: 10px; height: 10px; background: #00ff41; border-radius: 50%; box-shadow: 0 0 10px #00ff41; animation: flow 1.5s linear infinite; }
         @keyframes flow { 0% { left: 0; opacity: 1; } 100% { left: 100%; opacity: 0; } }
         
-        .node:hover .node-title { color: #00ff41; }
+        .tooltip { position: absolute; top: 120%; left: 50%; transform: translateX(-50%); width: 220px; background: rgba(13, 17, 23, 0.95); border: 1px solid #00ff41; border-radius: 6px; padding: 15px; text-align: left; opacity: 0; pointer-events: none; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,255,65,0.1); z-index: 10; backdrop-filter: blur(5px); }
+        .node:hover .tooltip { opacity: 1; top: 110%; }
+        .tt-title { color: #00ff41; font-weight: bold; border-bottom: 1px solid #30363d; padding-bottom: 5px; margin-bottom: 10px; font-size: 0.9rem;}
+        .tt-body { color: #8b949e; font-size: 0.8rem; line-height: 1.5; }
     </style>
     <div class="flow-container">
         <div class="node">
-            <div class="node-title">VISION.EXE</div>
-            <div class="node-desc">MediaPipe FaceMesh<br>Process ID: 8192</div>
+            <div class="node-title">HARDWARE</div>
+            <div style="font-size: 0.7rem; color: #8b949e;">Webcam & Mic</div>
+            <div class="tooltip">
+                <div class="tt-title">[ INPUT PERIPHERALS ]</div>
+                <div class="tt-body">Captures 60FPS uncompressed RGB frames and 44.1kHz audio streams, piping them to the Python daemons via direct memory access.</div>
+            </div>
         </div>
         <div class="arrow"><div class="packet"></div></div>
+        
+        <div class="node">
+            <div class="node-title">PYTHON DAEMONS</div>
+            <div style="font-size: 0.7rem; color: #8b949e;">Vision.exe / Voice.exe</div>
+            <div class="tooltip">
+                <div class="tt-title">[ COMPUTE LAYER ]</div>
+                <div class="tt-body">Isolated Background Processes.<br><br><b>Vision:</b> MediaPipe FaceMesh<br><b>Voice:</b> spaCy NLP<br><br>Process IDs: 8192 & 8193</div>
+            </div>
+        </div>
+        <div class="arrow"><div class="packet"></div></div>
+        
         <div class="node" style="border-color: #00ff41;">
             <div class="node-title" style="color: #00ff41;">IPC BRIDGE</div>
-            <div class="node-desc">.tommy_state.json<br>Latency: < 2ms</div>
+            <div style="font-size: 0.7rem; color: #8b949e;">.tommy_state.json</div>
+            <div class="tooltip" style="border-color:#ffbd2e;">
+                <div class="tt-title" style="color:#ffbd2e;">[ SHARED MEMORY ]</div>
+                <div class="tt-body">A high-speed JSON state machine acting as a zero-latency Inter-Process Communication bridge between the daemons and the Kernel.</div>
+            </div>
         </div>
         <div class="arrow"><div class="packet"></div></div>
+        
         <div class="node">
-            <div class="node-title">VOICE.EXE</div>
-            <div class="node-desc">spaCy NLP<br>Process ID: 8193</div>
+            <div class="node-title">OS KERNEL</div>
+            <div style="font-size: 0.7rem; color: #8b949e;">System Actions</div>
+            <div class="tooltip">
+                <div class="tt-title">[ EXECUTION ]</div>
+                <div class="tt-body">Reads the IPC Bridge every 1ms. Executes native OS commands (Mouse Move, Click, Type) using PyAutoGUI.</div>
+            </div>
         </div>
     </div>
 """, height=200)
@@ -434,18 +433,31 @@ with col4:
         </div>
         <script>
             const target = document.getElementById('typeTarget');
-            const codeStr = "pyautogui.hotkey('ctrl', 's')\\nprint('Voice saved file!')";
-            let index = 0;
+            const scripts = [
+                "pyautogui.hotkey('ctrl', 's')\\nprint('Voice saved file!')",
+                "import os\\nos.system('start spotify')\\nprint('Music initialized.')",
+                "for i in range(10):\\n    print(f'System scan {i}%')\\nprint('Done.')",
+                "def auto_code():\\n    return 'Voice is the new keyboard.'\\nauto_code()"
+            ];
+            let scriptIndex = 0;
+            let charIndex = 0;
             
             function typeCode() {
-                if (index < codeStr.length) {
-                    if (codeStr.charAt(index) === '\\n') target.innerHTML += '<br><span style="color:#a5d6ff;">';
-                    else target.innerHTML += codeStr.charAt(index);
-                    index++;
-                    setTimeout(typeCode, Math.random() * 80 + 30);
+                let currentStr = scripts[scriptIndex];
+                if (charIndex < currentStr.length) {
+                    let char = currentStr.charAt(charIndex);
+                    if (char === '\\n') target.innerHTML += '<br><span style="color:#a5d6ff;">';
+                    else target.innerHTML += char === ' ' ? '&nbsp;' : char;
+                    charIndex++;
+                    setTimeout(typeCode, Math.random() * 50 + 20);
                 } else {
                     target.innerHTML += '</span>';
-                    setTimeout(() => { target.innerHTML = ''; index = 0; typeCode(); }, 3000);
+                    setTimeout(() => { 
+                        target.innerHTML = ''; 
+                        charIndex = 0; 
+                        scriptIndex = (scriptIndex + 1) % scripts.length;
+                        typeCode(); 
+                    }, 2000);
                 }
             }
             setTimeout(typeCode, 1000);
