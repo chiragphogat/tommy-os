@@ -316,6 +316,25 @@ def run_vision_engine():
         
         current_time = time.time()
         
+        # --- SAFE STATE INITIALIZATION ---
+        mouth_open = False
+        both_closed = False
+        left_EAR = 1.0
+        right_EAR = 1.0
+        mouth_MAR = 0.0
+        norm_x, norm_y = 0.5, 0.5
+        
+        # We ensure these timers exist so they don't cause crashes on the first few frames
+        if 'eyes_closed_time' not in locals(): eyes_closed_time = current_time
+        if 'dictation_start_time' not in locals(): dictation_start_time = 0
+        if 'last_face_time' not in locals(): last_face_time = current_time
+        if 'mouth_was_open' not in locals(): mouth_was_open = False
+        if 'dictation_active' not in locals(): dictation_active = False
+        if 'eye_drag_mode' not in locals(): eye_drag_mode = False
+        if 'last_gesture_time' not in locals(): last_gesture_time = 0
+        if 'bias_samples' not in locals(): bias_samples = []
+        if 'nose_bias_x' not in locals(): nose_bias_x = 0.0
+        
         # --- PHASE 11: Omni-Sensory Superpower Cache ---
         # Quietly drop a single high-quality frame of the Physical World to disk every 1.5s
         # This allows the Voice LLM to 'look' through the blocked Vision Camera.
