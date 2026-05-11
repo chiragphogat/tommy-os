@@ -535,19 +535,20 @@ def run_vision_engine():
                     if total_active_fingers >= 8: # Phase 24: Lowered threshold from 10 to bypass Thumb depth-of-field failures!
                         hands_open_time = current_time
                     elif total_active_fingers == 0 and hands_open_time > 0:
-                        if current_time - hands_open_time < 2.0: # Bumped window slightly
-                            print("\n[⚡ BIO-GESTURE DETECTED] Both hands closed from Full Extension. Routing OS Power to Eye Engine...")
-                            try:
-                                with open(STATE_FILE, "r") as f: state_data = json.load(f)
-                            except: state_data = {}
-                            
-                            state_data["vision_mode"] = "eye"
-                            with open(STATE_FILE, "w") as f: json.dump(state_data, f)
-                            
-                            hands_open_time = 0.0 # Reset Trigger Data
-                            current_vision = "eye"
-                            last_active_vision = "" # Defeat the cached state immediately to force UI Pop-up render
-                            last_hand_check_time = current_time + 3.0 # Give the user 3 seconds to lower their hands!
+                        if current_time - hands_open_time < 2.0:
+                            if current_vision != "eye":
+                                print("\n[⚡ BIO-GESTURE DETECTED] Both hands closed from Full Extension. Routing OS Power to Eye Engine...")
+                                try:
+                                    with open(STATE_FILE, "r") as f: state_data = json.load(f)
+                                except: state_data = {}
+                                
+                                state_data["vision_mode"] = "eye"
+                                with open(STATE_FILE, "w") as f: json.dump(state_data, f)
+                                
+                                hands_open_time = 0.0 # Reset Trigger Data
+                                current_vision = "eye"
+                                last_active_vision = "" # Defeat the cached state immediately to force UI Pop-up render
+                                last_hand_check_time = current_time + 3.0 # Give the user 3 seconds to lower their hands!
 
         # =========================================================
         # 2️⃣ EYE TRACKING SYSTEM (FaceMesh)
