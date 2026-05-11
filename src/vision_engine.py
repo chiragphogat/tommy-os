@@ -368,7 +368,7 @@ def run_vision_engine():
                 hand_count = len(results.multi_hand_landmarks)
                 total_active_fingers = 0
                 
-                for hand_landmarks in results.multi_hand_landmarks:
+                for i, hand_landmarks in enumerate(results.multi_hand_landmarks):
                     mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                     landmarks = hand_landmarks.landmark
                     index_x, index_y = int(landmarks[8].x * cam_w), int(landmarks[8].y * cam_h)
