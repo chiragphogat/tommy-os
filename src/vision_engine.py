@@ -6,11 +6,12 @@ import numpy as np
 import time
 import os
 import json
+import threading
+import tkinter as tk
+import screen_brightness_control as sbc
+import pygetwindow as gw
 from math import hypot, atan2, degrees
 from datetime import datetime
-import threading
-import screen_brightness_control as sbc
-import tkinter as tk
 from dotenv import load_dotenv
 
 # --- INITIALIZATION ---
@@ -156,6 +157,48 @@ def read_vision_mode():
                 return json.load(f).get("vision_mode", "hand")
     except: pass
     return "hand" # Default Fallback
+
+def get_active_app_context():
+    try:
+        active_window = gw.getActiveWindow()
+        if not active_window: return "default"
+        title = active_window.title.lower()
+        
+        if "chrome" in title or "edge" in title or "browser" in title: return "browser"
+        if "code" in title or "notepad" in title or "text" in title: return "editor"
+        if "spotify" in title or "vlc" in title or "media" in title: return "media"
+        if "youtube" in title: return "media"
+        
+        return "default"
+    except: return "default"
+
+def get_active_app_context():
+    try:
+        active_window = gw.getActiveWindow()
+        if not active_window: return "default"
+        title = active_window.title.lower()
+        
+        if "chrome" in title or "edge" in title or "browser" in title: return "browser"
+        if "code" in title or "notepad" in title or "text" in title: return "editor"
+        if "spotify" in title or "vlc" in title or "media" in title: return "media"
+        if "youtube" in title: return "media"
+        
+        return "default"
+    except: return "default"
+
+def get_active_app_context():
+    try:
+        active_window = gw.getActiveWindow()
+        if not active_window: return "default"
+        title = active_window.title.lower()
+        
+        if "chrome" in title or "edge" in title or "browser" in title: return "browser"
+        if "code" in title or "notepad" in title or "text" in title: return "editor"
+        if "spotify" in title or "vlc" in title or "media" in title: return "media"
+        if "youtube" in title: return "media"
+        
+        return "default"
+    except: return "default"
 
 # --- EYE MATH UTILS ---
 def calculate_ear(eye_landmarks, frame_w: int, frame_h: int) -> float:
@@ -402,14 +445,29 @@ def run_vision_engine():
                             if dist_scissor < 40: pyautogui.scroll(100); last_macro_time = current_time
                             elif dist_scissor > 85: pyautogui.scroll(-100); last_macro_time = current_time
 
-                    # 3️⃣ THE WINDOW MANAGER (Palm)
+                    # 3️⃣ THE WINDOW MANAGER / APP CONTEXT (Palm)
                     elif is_palm:
-                        cv2.putText(img, "WINDOW SNAP", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
-                        if current_time - last_macro_time > 0.6:
-                            if clocX - last_x > 300: pyautogui.hotkey('alt', 'tab'); last_macro_time = current_time
-                            elif clocX - last_x < -300: pyautogui.hotkey('alt', 'shift', 'tab'); last_macro_time = current_time
-                            elif clocY - last_y < -200: pyautogui.hotkey('win', 'up'); last_macro_time = current_time
-                            elif clocY - last_y > 200: pyautogui.hotkey('win', 'down'); last_macro_time = current_time
+                        context = get_active_app_context()
+                        cv2.putText(img, f"CONTEXT: {context.upper()}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                        
+                        if current_time - last_macro_time > 0.8:
+                            # --- APP-SPECIFIC CONTEXT LOGIC ---
+                            if context == "browser":
+                                if clocX - last_x > 250: pyautogui.hotkey('ctrl', 'tab') # Next Tab
+                                elif clocX - last_x < -250: pyautogui.hotkey('ctrl', 'shift', 'tab') # Prev Tab
+                            elif context == "editor":
+                                if clocX - last_x > 250: pyautogui.hotkey('ctrl', 'y') # Redo
+                                elif clocX - last_x < -250: pyautogui.hotkey('ctrl', 'z') # Undo
+                            elif context == "media":
+                                if clocX - last_x > 250: pyautogui.press('nexttrack')
+                                elif clocX - last_x < -250: pyautogui.press('prevtrack')
+                            else: # Default System Logic
+                                if clocX - last_x > 300: pyautogui.hotkey('alt', 'tab')
+                                elif clocX - last_x < -300: pyautogui.hotkey('alt', 'shift', 'tab')
+                                elif clocY - last_y < -200: pyautogui.hotkey('win', 'up')
+                                elif clocY - last_y > 200: pyautogui.hotkey('win', 'down')
+                                
+                            last_macro_time = current_time
 
                     # 4️⃣ THE MEDIA CONTROLLER (Rock On)
                     elif is_rock:
