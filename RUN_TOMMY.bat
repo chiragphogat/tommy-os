@@ -21,8 +21,8 @@ echo [OS] Activating Virtual Environment...
 call venv\Scripts\activate.bat
 
 echo [OS] Igniting Master Kernel...
-echo T.O.M.M.Y. is starting. You can close the system using the 
-echo SHUTDOWN button on the HUD overlay once it appears.
+echo T.O.M.M.Y. is starting. This system is locked for persistence.
+echo To safely unmount the OS, press (Ctrl+C) in this terminal.
 echo.
 
 python tommy_os.py
