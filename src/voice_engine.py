@@ -660,10 +660,11 @@ def run_tommy(queue=None):
                                     
                                     # Unmute immediately after capturing vocals
                                     set_system_mute(False)
-                                    res_str = r.recognize_vosk(audio)
                                     try:
-                                        command = json.loads(res_str).get("text", "")
-                                    except BaseException:
+                                        command = r.recognize_google(audio)
+                                    except sr.UnknownValueError:
+                                        command = ""
+                                    except sr.RequestError:
                                         command = ""
                                     
                                     # If the user accidentally says "Hey Tommy" again while the box is green, 
@@ -704,10 +705,9 @@ def run_tommy(queue=None):
                         print(f"\r[FREE VOICE] Active Mode: [{current_mode.upper()}]  <-- Ambient Array Listening...", end="", flush=True)
                         try:
                             audio = r.listen(source, timeout=None, phrase_time_limit=15)
-                            res_str = r.recognize_vosk(audio)
                             try:
-                                command = json.loads(res_str).get("text", "").lower()
-                            except BaseException:
+                                command = r.recognize_google(audio).lower()
+                            except:
                                 command = ""
                             print(f"\n   ↳ [AMBIENT CAUGHT]: \"{command}\"")
                             
