@@ -307,6 +307,8 @@ def run_vision_engine():
     last_active_vision = ""
 
     while cap.isOpened():
+        current_time = time.time()
+        
         # Only poll the disk every 1 second to prevent 'State Jitter'
         if current_time - last_state_read_time > 1.0:
             new_vision = read_vision_mode()
@@ -319,8 +321,6 @@ def run_vision_engine():
         if not success: break
         img = cv2.flip(img, 1)
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        current_time = time.time()
         
         # --- SAFE STATE INITIALIZATION ---
         mouth_open = False
