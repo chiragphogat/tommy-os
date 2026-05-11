@@ -288,6 +288,8 @@ def run_vision_engine():
     prev_x, prev_y = 0.0, 0.0
     curr_x, curr_y = 0.0, 0.0
     left_EAR, right_EAR, mouth_MAR = 0.30, 0.30, 0.0
+    last_state_read_time = 0.0
+    current_vision = "eye"
     blink_count = 0
     eyes_closed = False
     eyes_closed_time = 0.0
@@ -305,10 +307,13 @@ def run_vision_engine():
     last_active_vision = ""
 
     while cap.isOpened():
-        current_vision = read_vision_mode()
-        if current_vision != last_active_vision:
-            show_mode_popup(f"Tracking: {current_vision}")
-            last_active_vision = current_vision
+        # Only poll the disk every 1 second to prevent 'State Jitter'
+        if current_time - last_state_read_time > 1.0:
+            new_vision = read_vision_mode()
+            if new_vision != current_vision:
+                show_mode_popup(f"Tracking: {new_vision}")
+                current_vision = new_vision
+            last_state_read_time = current_time
 
         success, img = cap.read()
         if not success: break
@@ -513,11 +518,18 @@ def run_vision_engine():
                     elif is_shaka:
                         cv2.putText(img, "HARDWARE LEVEL", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
                         if current_time - last_macro_time > 0.15:
+                            # Use hand side for direction (assuming flipped camera logic)
+                            # If hand label is 'Left' (actually Right hand in real life), go UP.
+                            is_right_hand = "right" in results.multi_handedness[i].classification[0].label.lower()
+                            
                             if hand_count == 1: # BRIGHTNESS
-                                try: threading.Thread(target=sbc.set_brightness, args=('+5',)).start()
+                                try:
+                                    dir_val = '+8' if is_right_hand else '-8'
+                                    threading.Thread(target=sbc.set_brightness, args=(dir_val,)).start()
                                 except: pass
                             else: # VOLUME
-                                pyautogui.press('volumeup')
+                                key = 'volumeup' if is_right_hand else 'volumedown'
+                                pyautogui.press(key)
                             last_macro_time = current_time
                     
                     elif is_ok:
