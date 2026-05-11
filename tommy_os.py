@@ -57,15 +57,6 @@ print('Press (Ctrl+C) natively in this terminal to Shutdown both cores.\n')
 
 try:
     while True:
-        # Check for Shutdown Request from HUD Button
-        try:
-            if os.path.exists(state_file):
-                with open(state_file, "r") as f:
-                    if json.load(f).get("shutdown_requested", False):
-                        print("\n[OS] Shutdown requested via HUD. Initiating terminal unmount...")
-                        break
-        except: pass
-
         # PHOENIX PROTOCOL: Continuous Health Check & Auto-Restart
         # Check Voice Engine
         if p_voice.poll() is not None:

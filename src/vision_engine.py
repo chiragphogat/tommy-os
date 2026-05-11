@@ -745,7 +745,7 @@ def run_vision_engine():
                 if eye_drag_mode: cv2.putText(img, "[DRAGGING]", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
         cv2.imshow("T.O.M.M.Y. Unified Vision Engine", img)
-        if cv2.waitKey(1) & 0xFF == 27: break # ESC to quit
+        cv2.waitKey(1)
 
     cap.release()
     cv2.destroyAllWindows()

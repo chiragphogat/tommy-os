@@ -70,38 +70,12 @@ class TommyHUD(QMainWindow):
             font-size: 14px;
         """)
 
-        # Shutdown Button (Bottom Right)
-        self.quit_btn = QLabel("🛑 SHUTDOWN SYSTEM", self)
-        self.quit_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.quit_btn.setGeometry(self.sw - 260, self.sh - 100, 220, 50)
-        self.quit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.quit_btn.setStyleSheet("""
-            background-color: rgba(150, 0, 0, 100);
-            color: #ff4444;
-            border: 1px solid #ff4444;
-            border-radius: 5px;
-            font-family: 'Segoe UI';
-            font-weight: bold;
-            font-size: 12px;
-        """)
-        # We use mousePressEvent for the button logic
-        self.quit_btn.mousePressEvent = self.request_shutdown
-
         # 4. DATA POLLING
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_hud)
-        self.timer.start(100) # 10 FPS is enough for HUD data
+        self.timer.start(500)
         
         self.last_state = {}
-
-    def request_shutdown(self, event):
-        try:
-            with open(STATE_FILE, "r") as f: d = json.load(f)
-            d["shutdown_requested"] = True
-            with open(STATE_FILE, "w") as f: json.dump(d, f)
-            self.id_badge.setText("🛑 SHUTTING DOWN...")
-            self.id_badge.setStyleSheet("background-color: red; color: white;")
-        except: pass
 
     def update_hud(self):
         try:
