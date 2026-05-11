@@ -352,11 +352,9 @@ def run_vision_engine():
             last_snapshot_time = current_time
 
         # =========================================================
-        # 1️⃣ HAND TRACKING SYSTEM (Enabled for Macros & Gestures)
+        # 1️⃣ HAND TRACKING SYSTEM (Hand Priority)
         # =========================================================
-        # We always check hands now, even in Eye mode, to allow for Hand Macros (Copy/Paste)
-        # while using Eye Gaze for the cursor!
-        if True: # Hybrid Enable
+        if current_vision == "hand":
             try:
                 results = hands.process(imgRGB)
             except (KeyboardInterrupt, SystemExit): raise
@@ -365,6 +363,7 @@ def run_vision_engine():
                 continue
 
             if results and results.multi_hand_landmarks:
+                last_hand_check_time = current_time
                 hand_count = len(results.multi_hand_landmarks)
                 total_active_fingers = 0
                 
@@ -542,34 +541,47 @@ def run_vision_engine():
                     # Anchor final comparative coordinates unconditionally
                     last_y, last_x = clocY, clocX
 
-                # --- Phase 20: 10-Finger Eye Mode Ignition Sequence ---
-                # Check AFTER both hands have been independently mapped in the loop
-                if hand_count == 2:
-                    if total_active_fingers >= 8: # Phase 24: Lowered threshold from 10 to bypass Thumb depth-of-field failures!
-                        hands_open_time = current_time
-                    elif total_active_fingers == 0 and hands_open_time > 0:
-                        if current_time - hands_open_time < 2.0:
-                            if current_vision != "eye":
-                                print("\n[⚡ BIO-GESTURE DETECTED] Both hands closed from Full Extension. Routing OS Power to Eye Engine...")
-                                try:
-                                    with open(STATE_FILE, "r") as f: state_data = json.load(f)
-                                except: state_data = {}
-                                
-                                state_data["vision_mode"] = "eye"
-                                with open(STATE_FILE, "w") as f: json.dump(state_data, f)
-                                
-                                hands_open_time = 0.0 # Reset Trigger Data
-                                current_vision = "eye"
-                                last_active_vision = "" # Defeat the cached state immediately to force UI Pop-up render
-                                last_hand_check_time = current_time + 3.0 # Give the user 3 seconds to lower their hands!
+            else:
+                # If no hands are detected for 2 seconds, auto-switch to Eye Mode
+                if current_time - last_hand_check_time > 2.0:
+                    if current_vision != "eye":
+                        print("\n[⚡ HANDS DROPPED] No hands detected. Reverting to Eye Engine...")
+                        try:
+                            with open(STATE_FILE, "r") as f: state_data = json.load(f)
+                        except: state_data = {}
+                        
+                        state_data["vision_mode"] = "eye"
+                        try:
+                            with open(STATE_FILE, "w") as f: json.dump(state_data, f)
+                        except: pass
+                        
+                        current_vision = "eye"
+                        last_active_vision = "" # Force UI Pop-up render
 
         # =========================================================
         # 2️⃣ EYE TRACKING SYSTEM (FaceMesh)
         # =========================================================
         if current_vision == "eye":
             
-            # The legacy 'Nano-Scale Hand Interceptor' has been removed.
-            # Hands and Eyes now run perfectly together in Hybrid Mode.
+            # --- Hand Interceptor ---
+            # If a hand is detected while in eye mode, instantly switch to Hand Mode
+            if current_time - last_hand_check_time > 0.5:
+                small_img = cv2.resize(imgRGB, (256, 144))
+                hand_ping = hands.process(small_img)
+                if hand_ping.multi_hand_landmarks:
+                    print("\n[⚡ HAND DETECTED] Hand found in frame. Switching to Hand Engine...")
+                    try:
+                        with open(STATE_FILE, "r") as f: d = json.load(f)
+                    except: d = {}
+                    d["vision_mode"] = "hand"
+                    try:
+                        with open(STATE_FILE, "w") as f: json.dump(d, f)
+                    except: pass
+                    
+                    last_hand_check_time = current_time
+                    current_vision = "hand"
+                    last_active_vision = "" # Forces immediate UI Notification
+                    continue # Skip FaceMesh logic for this frame to immediately handle hands
 
             results = face_mesh.process(imgRGB)
 
