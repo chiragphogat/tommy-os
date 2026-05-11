@@ -132,8 +132,8 @@ mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True, min_detection_confidence=0.7, min_tracking_confidence=0.7)
 
 # --- ⚙️ EYE TRACKING CONFIG ---
-EAR_THRESHOLD = 0.17         
-WINK_THRESHOLD = 0.20        
+EAR_THRESHOLD = 0.22         # Increased for easier blink detection
+WINK_THRESHOLD = 0.26        # Increased for easier wink detection
 MOUTH_AR_THRESHOLD = 0.25    
 DOUBLE_BLINK_TIME = 0.70      
 WINK_HOLD_TIME = 0.20        
