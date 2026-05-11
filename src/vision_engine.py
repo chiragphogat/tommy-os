@@ -566,27 +566,13 @@ def run_vision_engine():
         # =========================================================
         # 2️⃣ EYE TRACKING SYSTEM (FaceMesh)
         # =========================================================
-        elif current_vision == "eye":
+        if current_vision == "eye":
             
-            # --- Phase 21: 2Hz Nano-Scale Hand Interceptor ---
-            if current_time - last_hand_check_time > 0.5:
-                small_img = cv2.resize(imgRGB, (256, 144)) # Shrink 96% of pixels away
-                hand_ping = hands.process(small_img)
-                if hand_ping.multi_hand_landmarks:
-                    print("\n[⚡ HAND DETECTED] Intercepted Physical Hand Movement. Snapping OS back to Hand Engine...")
-                    try:
-                        with open(STATE_FILE, "r") as f: d = json.load(f)
-                    except: d = {}
-                    d["vision_mode"] = "hand"
-                    with open(STATE_FILE, "w") as f: json.dump(d, f)
-                    
-                    last_hand_check_time = current_time
-                    current_vision = "hand"
-                    last_active_vision = "" # Forces immediate UI Notification
-                    continue # Sever FaceMesh logic for this frame to boost hand-off speed
-                last_hand_check_time = current_time
+            # The legacy 'Nano-Scale Hand Interceptor' has been removed.
+            # Hands and Eyes now run perfectly together in Hybrid Mode.
 
             results = face_mesh.process(imgRGB)
+
             if results.multi_face_landmarks:
                 face_landmarks = results.multi_face_landmarks[0]
                 # --- UNIVERSAL ACCESS (Shield Disabled) ---
