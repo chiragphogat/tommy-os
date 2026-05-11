@@ -85,4 +85,13 @@ Tired of saying "Hey Tommy" every 10 seconds? Switch to a context mode where Tom
 - **"Activate Normal Mode":** Puts the Wake Word safety breaks back on.
 
 ---
+
+## 🛡️ Troubleshooting Windows SmartScreen
+
+If you see a message saying **"Windows protected your PC"** or **"Windows didn't allow this app"**:
+1.  Click **"More info"**.
+2.  Click **"Run anyway"**.
+
+This happens because T.O.M.M.Y. is an independent open-source project. The system is 100% transparent and safe.
+
 We built this because we were tired of being strapped to keyboards. Break the desk. Build things.
