@@ -340,6 +340,7 @@ def run_vision_engine():
         if 'last_gesture_time' not in locals(): last_gesture_time = 0
         if 'bias_samples' not in locals(): bias_samples = []
         if 'nose_bias_x' not in locals(): nose_bias_x = 0.0
+        if 'nose_bias_y' not in locals(): nose_bias_y = 0.0
         
         # --- PHASE 11: Omni-Sensory Superpower Cache ---
         # Quietly drop a single high-quality frame of the Physical World to disk every 1.5s
@@ -588,30 +589,29 @@ def run_vision_engine():
             results = face_mesh.process(imgRGB)
             if results.multi_face_landmarks:
                 face_landmarks = results.multi_face_landmarks[0]
-                if verifier.verify(face_landmarks.landmark, cam_w, cam_h):
-                    last_face_time = current_time
-                    shield.disable()
-                else:
-                    if not shield.active and current_time - last_face_time > 1.5:
-                        print("[⚠️ INTRUDER] Face detected but geometry does not match Architect profile.")
-                        shield.enable()
-                    continue
+                # --- UNIVERSAL ACCESS (Shield Disabled) ---
+                last_face_time = current_time
+                shield.disable()
 
                 landmarks = face_landmarks.landmark
                 # --- Cursor Control (Nose Pointing stabilization) ---
                 nose_tip = landmarks[1]
                 nose_x, nose_y = nose_tip.x, nose_tip.y
                 
-                # PHASE 32: DYNAMIC BIAS CORRECTION
-                # If the user is looking at the screen, we subtly nudge the bias 
-                # to center the 'nose_x' around 0.50 (the logical midline).
+                # PHASE 32: DUAL-AXIS DYNAMIC BIAS CORRECTION
+                # System now learns the 'center' of your gaze in real-time on both X and Y
                 if len(bias_samples) < 100:
-                    bias_samples.append(nose_x)
-                    nose_bias_x = (sum(bias_samples) / len(bias_samples)) - 0.50
+                    bias_samples.append((nose_x, nose_y))
+                    avg_x = sum(s[0] for s in bias_samples) / len(bias_samples)
+                    avg_y = sum(s[1] for s in bias_samples) / len(bias_samples)
+                    nose_bias_x, nose_bias_y = avg_x - 0.50, avg_y - 0.50
                 
                 corrected_nose_x = nose_x - nose_bias_x
+                corrected_nose_y = nose_y - nose_bias_y
                 
-                norm_x, norm_y = (corrected_nose_x - LEFT_BOUND) / (RIGHT_BOUND - LEFT_BOUND), (nose_y - TOP_BOUND) / (BOTTOM_BOUND - TOP_BOUND)
+                # Use wider, more elastic bounds for Omni-Angle tracking
+                norm_x = (corrected_nose_x - 0.40) / (0.60 - 0.40)
+                norm_y = (corrected_nose_y - 0.35) / (0.65 - 0.35)
                 norm_x, norm_y = max(0.0, min(1.0, norm_x)), max(0.0, min(1.0, norm_y))
                 
                 # --- IDENTITY TRAINING TRIGGER ---
