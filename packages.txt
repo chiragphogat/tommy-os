@@ -1,0 +1,8 @@
+portaudio19-dev
+python3-all-dev
+libasound2-dev
+libx11-6
+libxext6
+libxrender1
+libxtst6
+libxi6
