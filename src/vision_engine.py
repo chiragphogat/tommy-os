@@ -121,7 +121,7 @@ class PrivacyShield:
                 self.root = None
 
 pyautogui.FAILSAFE = False
-pyautogui.PAUSE = 0 # DELETES PYAUTOGUI's NATIVE 100ms THREAD-BLOCKING SLEEP (Core fix for "Lag")
+pyautogui.PAUSE = 0.01 # Restored a micro-pause to ensure OS signal registration
 
 # --- LOAD MEDIAPIPE SOLUTIONS ONCE ---
 mp_hands = mp.solutions.hands
@@ -132,20 +132,21 @@ mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(refine_landmarks=True, min_detection_confidence=0.7, min_tracking_confidence=0.7)
 
 # --- ⚙️ EYE TRACKING CONFIG ---
-EAR_THRESHOLD = 0.18         
-WINK_THRESHOLD = 0.22        
-MOUTH_AR_THRESHOLD = 0.28    
-DOUBLE_BLINK_TIME = 0.60      
-WINK_HOLD_TIME = 0.15        
-GESTURE_COOLDOWN = 0.4       
+EAR_THRESHOLD = 0.17         
+WINK_THRESHOLD = 0.20        
+MOUTH_AR_THRESHOLD = 0.25    
+DOUBLE_BLINK_TIME = 0.70      
+WINK_HOLD_TIME = 0.20        
+GESTURE_COOLDOWN = 0.5       
 SCROLL_COOLDOWN = 0.1        
-SMOOTHENING = 7              
+SMOOTHENING = 12             # Increased from 7 for rock-solid stability
 SCROLL_AMOUNT = 120
 
-LEFT_BOUND = 0.46
-RIGHT_BOUND = 0.54
-TOP_BOUND = 0.42
-BOTTOM_BOUND = 0.58
+# Widened bounds to prevent the cursor from 'hitting a wall' too early
+LEFT_BOUND = 0.40
+RIGHT_BOUND = 0.60
+TOP_BOUND = 0.38
+BOTTOM_BOUND = 0.62
 
 # --- OS STATE & IPC LOOP ---
 STATE_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".tommy_state.json")
@@ -345,9 +346,11 @@ def run_vision_engine():
             last_snapshot_time = current_time
 
         # =========================================================
-        # 1️⃣ HAND TRACKING SYSTEM
+        # 1️⃣ HAND TRACKING SYSTEM (Enabled for Macros & Gestures)
         # =========================================================
-        if current_vision == "hand":
+        # We always check hands now, even in Eye mode, to allow for Hand Macros (Copy/Paste)
+        # while using Eye Gaze for the cursor!
+        if True: # Hybrid Enable
             try:
                 results = hands.process(imgRGB)
             except (KeyboardInterrupt, SystemExit): raise
@@ -419,8 +422,10 @@ def run_vision_engine():
                     # 1️⃣ THE NAVIGATION WAND (Cursor & Editing)
                     if is_index_only or is_dragging_text or is_fist:
                         cv2.putText(img, "WAND / EDITING", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 3)
-                        try: pyautogui.moveTo(clocX, clocY)
-                        except: pass
+                        # ONLY move cursor if Hand Mode is explicitly active
+                        if current_vision == "hand":
+                            try: pyautogui.moveTo(clocX, clocY)
+                            except: pass
                         
                         # Dedicated Undo (`Ctrl+Z`, 3-Finger Pinch)
                         if dist_index < 55 and dist_middle < 55:
@@ -608,7 +613,7 @@ def run_vision_engine():
                 screen_x, screen_y = norm_x * screen_w, norm_y * screen_h
                 
                 dist = hypot(screen_x - prev_x, screen_y - prev_y)
-                if dist < 2.5: curr_x, curr_y = prev_x, prev_y # Deadzone filter
+                if dist < 5.0: curr_x, curr_y = prev_x, prev_y # Increased deadzone to kill shiver
                 else:
                     smooth_factor = max(2.0, SMOOTHENING / 1.5) if dist > 60.0 else SMOOTHENING
                     curr_x, curr_y = prev_x + (screen_x - prev_x) / smooth_factor, prev_y + (screen_y - prev_y) / smooth_factor
