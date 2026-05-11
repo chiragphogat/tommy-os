@@ -600,6 +600,16 @@ def run_tommy(queue=None):
     try:
         active_attention = False
         while True:
+            # --- 🛰️ IPC SYNC (Phase 30) ---
+            try:
+                if os.path.exists(STATE_FILE):
+                    with open(STATE_FILE, 'r') as f:
+                        state_data = json.load(f)
+                        state_mode = state_data.get("voice_mode", "normal")
+                        if state_mode != CURRENT_VOICE_MODE:
+                            with state_lock: CURRENT_VOICE_MODE = state_mode
+            except: pass
+
             with state_lock:
                 current_mode = CURRENT_VOICE_MODE
                 
@@ -745,6 +755,31 @@ def run_tommy(queue=None):
                             print(f"❌ Ambient Error: {e}")
                 except Exception as stream_err:
                     print(f"❌ Core Audio Stream Error: {stream_err}")
+                    time.sleep(1)
+
+            # --- 🎙️ PHASE 30: CONTINUOUS DICTATION ---
+            elif current_mode == "dictation":
+                if recorder and recorder.is_recording:
+                    recorder.stop()
+                
+                try:
+                    with sr.Microphone() as source:
+                        print(f"\r[🎙️ DICTATING] Capture Mode: [ACTIVE]  <-- Typing everything you speak...", end="", flush=True)
+                        try:
+                            # Phrase time limit is short for real-time typing feel
+                            audio = r.listen(source, timeout=None, phrase_time_limit=8)
+                            res_str = r.recognize_vosk(audio)
+                            try:
+                                text = json.loads(res_str).get("text", "").strip()
+                                if text:
+                                    print(f"\n   [TYPE]: \"{text}\"")
+                                    # Typing with a small interval for realism
+                                    pyautogui.write(text + " ", interval=0.01)
+                            except: pass
+                        except sr.WaitTimeoutError: pass
+                        except sr.UnknownValueError: pass
+                except Exception as e:
+                    print(f"❌ Dictation Error: {e}")
                     time.sleep(1)
 
     except KeyboardInterrupt:

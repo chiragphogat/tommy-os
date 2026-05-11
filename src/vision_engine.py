@@ -11,6 +11,69 @@ from datetime import datetime
 import threading
 import screen_brightness_control as sbc
 import tkinter as tk
+from dotenv import load_dotenv
+
+# --- INITIALIZATION ---
+load_dotenv(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".env"))
+
+# --- 🛡️ PRIVACY & IDENTITY ENGINE ---
+class IdentityVerifier:
+    def __init__(self):
+        self.stored_ratios = None
+        self.IDENTITY_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".architect_identity.json")
+        self.load_identity()
+
+    def load_identity(self):
+        try:
+            if os.path.exists(self.IDENTITY_FILE):
+                with open(self.IDENTITY_FILE, "r") as f:
+                    self.stored_ratios = json.load(f)
+        except: self.stored_ratios = None
+
+    def save_identity(self, ratios):
+        with open(self.IDENTITY_FILE, "w") as f:
+            json.dump(ratios, f)
+        self.stored_ratios = ratios
+        # Update IPC State
+        try:
+            with open(STATE_FILE, "r") as f: d = json.load(f)
+            d["identity"] = "VERIFIED"
+            with open(STATE_FILE, "w") as f: json.dump(d, f)
+        except: pass
+        print("[🛡️ IDENTITY SECURED] Architect profile saved.")
+
+    def calculate_ratios(self, landmarks, w, h):
+        # 1: Nose, 33: Left Eye, 263: Right Eye, 0: Mouth Top
+        def d(p1, p2): return hypot((p1.x - p2.x)*w, (p1.y - p2.y)*h)
+        
+        eye_dist = d(landmarks[33], landmarks[263])
+        nose_to_mouth = d(landmarks[1], landmarks[0])
+        left_eye_to_nose = d(landmarks[33], landmarks[1])
+        right_eye_to_nose = d(landmarks[263], landmarks[1])
+        
+        if nose_to_mouth == 0: return None
+        return {
+            "eye_ratio": round(eye_dist / nose_to_mouth, 3),
+            "sym_ratio": round(left_eye_to_nose / right_eye_to_nose, 3)
+        }
+
+    def verify(self, landmarks, w, h):
+        if not self.stored_ratios: return True # Fallback if not trained
+        current = self.calculate_ratios(landmarks, w, h)
+        if not current: return False
+        
+        # Check within 12% tolerance (Geometric Deterministic Check)
+        e_diff = abs(current["eye_ratio"] - self.stored_ratios["eye_ratio"]) / self.stored_ratios["eye_ratio"]
+        s_diff = abs(current["sym_ratio"] - self.stored_ratios["sym_ratio"]) / self.stored_ratios["sym_ratio"]
+        
+        match = e_diff < 0.12 and s_diff < 0.12
+        # Update IPC State for HUD visualization
+        try:
+            with open(STATE_FILE, "r") as f: d = json.load(f)
+            d["identity"] = "VERIFIED" if match else "UNKNOWN"
+            with open(STATE_FILE, "w") as f: json.dump(d, f)
+        except: pass
+        return match
 
 class PrivacyShield:
     def __init__(self):
@@ -35,11 +98,21 @@ class PrivacyShield:
     def enable(self):
         if not self.is_active:
             self.is_active = True
+            try:
+                with open(STATE_FILE, "r") as f: d = json.load(f)
+                d["is_locked"] = True
+                with open(STATE_FILE, "w") as f: json.dump(d, f)
+            except: pass
             threading.Thread(target=self._create_shield, daemon=True).start()
 
     def disable(self):
         if self.is_active:
             self.is_active = False
+            try:
+                with open(STATE_FILE, "r") as f: d = json.load(f)
+                d["is_locked"] = False
+                with open(STATE_FILE, "w") as f: json.dump(d, f)
+            except: pass
             if self.root:
                 try:
                     self.root.after(0, self.root.destroy)
@@ -68,10 +141,10 @@ SCROLL_COOLDOWN = 0.1
 SMOOTHENING = 7              
 SCROLL_AMOUNT = 120
 
-LEFT_BOUND = 0.40
-RIGHT_BOUND = 0.60
-TOP_BOUND = 0.35
-BOTTOM_BOUND = 0.65
+LEFT_BOUND = 0.46
+RIGHT_BOUND = 0.54
+TOP_BOUND = 0.42
+BOTTOM_BOUND = 0.58
 
 # --- OS STATE & IPC LOOP ---
 STATE_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".tommy_state.json")
@@ -118,7 +191,13 @@ def show_mode_popup(mode_name, title="T.O.M.M.Y. VISUAL OS"):
 
 def run_vision_engine():
     screen_w, screen_h = pyautogui.size()
-    cap = cv2.VideoCapture(0)
+    
+    # --- CAMERA CONFIGURATION ---
+    # We default to index 0 (System Camera). 
+    # If DroidCam is installed, it often hijacks index 0. 
+    # Change VISION_CAMERA_INDEX in .env to 1 to bypass DroidCam.
+    cam_index = int(os.getenv("VISION_CAMERA_INDEX", 0))
+    cap = cv2.VideoCapture(cam_index)
     cam_w, cam_h = 1280, 720
     cap.set(3, cam_w)
     cap.set(4, cam_h)
@@ -131,7 +210,20 @@ def run_vision_engine():
         except: return {}
     
     macros = load_macros()
+    verifier = IdentityVerifier()
     shield = PrivacyShield()
+    
+    # Initialize State for HUD
+    try:
+        with open(STATE_FILE, "r") as f: d = json.load(f)
+        d["identity"] = "UNKNOWN"
+        d["is_locked"] = False
+        with open(STATE_FILE, "w") as f: json.dump(d, f)
+    except: pass
+    
+    # --- NOSE DRIFT CORRECTION (Phase 32) ---
+    nose_bias_x = 0.0
+    bias_samples = []
     last_face_time = time.time()
     
     # --- PHYSICAL WORLD SNAPSHOT TIMER ---
@@ -159,6 +251,8 @@ def run_vision_engine():
     left_wink_time, right_wink_time = 0.0, 0.0
     left_winking, right_winking = False, False
     eye_drag_mode, mouth_was_open = False, False
+    dictation_active = False
+    dictation_start_time = 0.0
 
     print("="*50)
     print(" 👁️ T.O.M.M.Y. VISION KERNEL V3.2 ONLINE 👁️")
@@ -192,8 +286,14 @@ def run_vision_engine():
         # 1️⃣ HAND TRACKING SYSTEM
         # =========================================================
         if current_vision == "hand":
-            results = hands.process(imgRGB)
-            if results.multi_hand_landmarks:
+            try:
+                results = hands.process(imgRGB)
+            except (KeyboardInterrupt, SystemExit): raise
+            except Exception as e:
+                print(f"⚠️ [VISION_STUTTER] Hand Engine frame skip: {e}")
+                continue
+
+            if results and results.multi_hand_landmarks:
                 hand_count = len(results.multi_hand_landmarks)
                 total_active_fingers = 0
                 
@@ -235,6 +335,7 @@ def run_vision_engine():
                     is_rock = fingers == [1, 0, 0, 1] and not thumb_extended
                     is_thumb_up = fingers == [0, 0, 0, 0] and thumb_extended
                     is_shaka = fingers == [0, 0, 0, 1] and thumb_extended
+                    is_ok = dist_index < 40 and fingers[1:] == [1, 1, 1]
 
                     # --- ACTIVE SPATIAL MATHEMATICS ---
                     box_margin = 150
@@ -321,17 +422,26 @@ def run_vision_engine():
                         else: previous_pinch = False
 
                     # 5️⃣ THE HARDWARE OVERLORD (Thumb/Shaka)
-                    elif is_thumb_up or is_shaka:
+                    elif is_thumb_up:
+                        cv2.putText(img, "ENTER / CONFIRM", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                        if current_time - last_macro_time > 0.8:
+                            pyautogui.press('enter')
+                            last_macro_time = current_time
+
+                    elif is_shaka:
                         cv2.putText(img, "HARDWARE LEVEL", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
-                        if current_time - last_macro_time > 0.10:
+                        if current_time - last_macro_time > 0.15:
                             if hand_count == 1: # BRIGHTNESS
-                                try:
-                                    if is_thumb_up: threading.Thread(target=sbc.set_brightness, args=('-5',)).start()
-                                    if is_shaka: threading.Thread(target=sbc.set_brightness, args=('+5',)).start()
+                                try: threading.Thread(target=sbc.set_brightness, args=('+5',)).start()
                                 except: pass
                             else: # VOLUME
-                                if is_thumb_up: pyautogui.press('volumedown')
-                                if is_shaka: pyautogui.press('volumeup')
+                                pyautogui.press('volumeup')
+                            last_macro_time = current_time
+                    
+                    elif is_ok:
+                        cv2.putText(img, "ENTER / CONFIRM", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                        if current_time - last_macro_time > 0.8:
+                            pyautogui.press('enter')
                             last_macro_time = current_time
 
                     # Anchor final comparative coordinates unconditionally
@@ -382,15 +492,42 @@ def run_vision_engine():
 
             results = face_mesh.process(imgRGB)
             if results.multi_face_landmarks:
-                last_face_time = current_time
-                shield.disable()
+                face_landmarks = results.multi_face_landmarks[0]
+                if verifier.verify(face_landmarks.landmark, cam_w, cam_h):
+                    last_face_time = current_time
+                    shield.disable()
+                else:
+                    if not shield.active and current_time - last_face_time > 1.5:
+                        print("[⚠️ INTRUDER] Face detected but geometry does not match Architect profile.")
+                        shield.enable()
+                    continue
 
-                landmarks = results.multi_face_landmarks[0].landmark
+                landmarks = face_landmarks.landmark
                 # --- Cursor Control (Nose Pointing stabilization) ---
                 nose_tip = landmarks[1]
                 nose_x, nose_y = nose_tip.x, nose_tip.y
-                norm_x, norm_y = (nose_x - LEFT_BOUND) / (RIGHT_BOUND - LEFT_BOUND), (nose_y - TOP_BOUND) / (BOTTOM_BOUND - TOP_BOUND)
+                
+                # PHASE 32: DYNAMIC BIAS CORRECTION
+                # If the user is looking at the screen, we subtly nudge the bias 
+                # to center the 'nose_x' around 0.50 (the logical midline).
+                if len(bias_samples) < 100:
+                    bias_samples.append(nose_x)
+                    nose_bias_x = (sum(bias_samples) / len(bias_samples)) - 0.50
+                
+                corrected_nose_x = nose_x - nose_bias_x
+                
+                norm_x, norm_y = (corrected_nose_x - LEFT_BOUND) / (RIGHT_BOUND - LEFT_BOUND), (nose_y - TOP_BOUND) / (BOTTOM_BOUND - TOP_BOUND)
                 norm_x, norm_y = max(0.0, min(1.0, norm_x)), max(0.0, min(1.0, norm_y))
+                
+                # --- IDENTITY TRAINING TRIGGER ---
+                # If the user holds 'Mouth Open' + 'Eyes Closed' for 3s, we learn their face.
+                if mouth_open and both_closed and current_time - eyes_closed_time > 3.0:
+                    ratios = verifier.calculate_ratios(landmarks, cam_w, cam_h)
+                    if ratios:
+                        verifier.save_identity(ratios)
+                        show_mode_popup("Identity: SECURED")
+                        last_gesture_time = current_time + 2.0
+                
                 screen_x, screen_y = norm_x * screen_w, norm_y * screen_h
                 
                 dist = hypot(screen_x - prev_x, screen_y - prev_y)
@@ -423,6 +560,30 @@ def run_vision_engine():
                         mouth_was_open = True
                 else: mouth_was_open = False
 
+                # --- 🎤 VOICE DICTATION TRIGGER (Phase 30) ---
+                if mouth_open:
+                    if dictation_start_time == 0: dictation_start_time = current_time
+                    elif current_time - dictation_start_time > 1.5 and not dictation_active:
+                        print("\n[🎙️ DICTATION ACTIVE] Mouth held open. Initializing Voice-to-Text Engine...")
+                        try:
+                            with open(STATE_FILE, "r") as f: d = json.load(f)
+                            d["voice_mode"] = "dictation"
+                            with open(STATE_FILE, "w") as f: json.dump(d, f)
+                            dictation_active = True
+                            show_mode_popup("Dictation: ON")
+                        except: pass
+                else:
+                    if dictation_active:
+                        print("[🎙️ DICTATION OFF] Mouth closed. Returning to normal audio.")
+                        try:
+                            with open(STATE_FILE, "r") as f: d = json.load(f)
+                            d["voice_mode"] = "normal"
+                            with open(STATE_FILE, "w") as f: json.dump(d, f)
+                            dictation_active = False
+                            show_mode_popup("Dictation: OFF")
+                        except: pass
+                    dictation_start_time = 0
+
                 # BLINKS, CLICKS, WINKS & SCROLLING
                 both_closed = left_EAR < EAR_THRESHOLD and right_EAR < EAR_THRESHOLD
                 left_closed = left_EAR < WINK_THRESHOLD and right_EAR > WINK_THRESHOLD
@@ -439,8 +600,16 @@ def run_vision_engine():
                     if head_roll > 10: state_tokens.append("head_tilt_right")
                     elif head_roll < -10: state_tokens.append("head_tilt_left")
                     
-                    if left_closed and not both_closed: state_tokens.append("left_wink")
-                    elif right_closed and not both_closed: state_tokens.append("right_wink")
+                    if left_closed and not both_closed: 
+                        state_tokens.append("left_wink")
+                        left_wink_time = current_time
+                    elif right_closed and not both_closed: 
+                        state_tokens.append("right_wink")
+                        # --- PHASE 35: WINK SEQUENCING (ENTER) ---
+                        if current_time - left_wink_time < 0.6:
+                            pyautogui.press('enter')
+                            cv2.putText(img, "EYE: ENTER", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                            last_gesture_time = current_time + 0.5
                     
                     if mouth_open: state_tokens.append("mouth_open")
                     
@@ -479,7 +648,11 @@ def run_vision_engine():
                     if duration < 0.45: # FAST BLINK
                         blink_count += 1
                         last_blink_time = current_time
-                    elif 0.45 <= duration < 2.0: # MEDIUM BLINK HOLD
+                    elif 0.45 <= duration < 1.0: # PHASE 35: LONG BLINK = ENTER
+                        pyautogui.press('enter')
+                        cv2.putText(img, "EYE: ENTER", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                        last_gesture_time = current_time
+                    elif 1.0 <= duration < 2.0: # EXTRA LONG BLINK = MEDIA
                         pyautogui.press('playpause')
                         last_gesture_time = current_time
                         

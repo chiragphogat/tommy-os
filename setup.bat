@@ -62,7 +62,7 @@ echo   Remember to add your free Picovoice token to the .env file!
 echo   Launching PowerShell Terminal in T.O.M.M.Y. Environment...
 echo ========================================================
 
-:: Spawn a native PowerShell instance, bypass execution policies to allow activate.ps1, and stay open
-start powershell -NoExit -ExecutionPolicy Bypass -Command "& { cd '%~dp0'; .\venv\Scripts\Activate.ps1; Clear-Host; Write-Host -ForegroundColor Green '========================================================'; Write-Host -ForegroundColor Green ' T.O.M.M.Y. VIRTUAL ENVIRONMENT ACTIVATED.'; Write-Host -ForegroundColor Green ' Press ENTER to launch the OS!'; Write-Host -ForegroundColor Green '========================================================'; [Microsoft.PowerShell.PSConsoleReadLine]::Insert('python tommy_os.py') }"
+:: Spawn a native PowerShell instance, bypass execution policies to allow activate.ps1, and LAUNCH T.O.M.M.Y. IMMEDIATELY
+start powershell -NoExit -ExecutionPolicy Bypass -Command "& { cd '%~dp0'; .\venv\Scripts\Activate.ps1; Clear-Host; Write-Host -ForegroundColor Green '========================================================'; Write-Host -ForegroundColor Green ' T.O.M.M.Y. OS BOOTING...'; Write-Host -ForegroundColor Green '========================================================'; python tommy_os.py }"
 
 exit /b
