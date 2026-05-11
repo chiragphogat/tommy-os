@@ -661,7 +661,7 @@ def run_tommy(queue=None):
                                     # Unmute immediately after capturing vocals
                                     set_system_mute(False)
                                     try:
-                                        command = r.recognize_google(audio)
+                                        command = r.recognize_google(audio, language="en-IN")
                                     except sr.UnknownValueError:
                                         command = ""
                                     except sr.RequestError:
@@ -706,7 +706,7 @@ def run_tommy(queue=None):
                         try:
                             audio = r.listen(source, timeout=None, phrase_time_limit=15)
                             try:
-                                command = r.recognize_google(audio).lower()
+                                command = r.recognize_google(audio, language="en-IN").lower()
                             except:
                                 command = ""
                             print(f"\n   ↳ [AMBIENT CAUGHT]: \"{command}\"")
