@@ -13,8 +13,8 @@ print("="*60)
 state_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), ".tommy_state.json")
 try:
     with open(state_file, "w") as f:
-        json.dump({"vision_mode": "hand", "shutdown_requested": False}, f)
-    print("[OS] IPC Subprocess Bridge Initialized (Hand Tracking Default)")
+        json.dump({"vision_mode": "eye", "shutdown_requested": False}, f)
+    print("[OS] IPC Subprocess Bridge Initialized (Eye Tracking Default)")
 except Exception as e:
     print(f"❌ [WARNING] IPC Bridge Failure: {e}")
 

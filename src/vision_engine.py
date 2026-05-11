@@ -154,9 +154,9 @@ def read_vision_mode():
     try:
         if os.path.exists(STATE_FILE):
             with open(STATE_FILE, 'r') as f:
-                return json.load(f).get("vision_mode", "hand")
+                return json.load(f).get("vision_mode", "eye")
     except: pass
-    return "hand" # Default Fallback
+    return "eye" # Default Fallback
 
 def get_active_app_context():
     try:
